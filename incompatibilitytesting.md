@@ -1,11 +1,10 @@
 This file is temporary working space, just ruling out mods that are compatible/incompatible
 
-
-
-
+--------------------------------------------------------------
 
 Working rendezvous and time warp
 
+----
 
 Active Memory Management
 
@@ -33,10 +32,11 @@ Universe Replacer
 
 Toolbar
 
-
+--------------------------------------------------------------
 
 Next up to test:
 
+----
 
 Kerbal Engineer
 
@@ -50,12 +50,11 @@ SCANsat
 
 Nothke Serivce Com
 
-
-
-
+--------------------------------------------------------------
 
 Possibilities:
 
+----
 
 ActionGroupManager
 

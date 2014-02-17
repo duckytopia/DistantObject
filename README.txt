@@ -7,7 +7,7 @@ This plugin renders effects for distant objects in Kerbal Space Program.
 
 
 Forum thread:
-(NOT UP YET)
+http://forum.kerbalspaceprogram.com/threads/69907
 
 
 

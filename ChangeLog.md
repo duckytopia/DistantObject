@@ -7,6 +7,8 @@ v1.2 (February 18, 2014)
 - Fixed issue with plugin trying to render launch clamps at large distances and causing ships to explode
 - Fixed issue with plugin incorrectly loading custom planet color definitions
 - Added some more information to print to the console for easier debugging
+- Added setting to easily toggle vessel rendering
+- Vessel rendering is now disabled by default
 
 ----
 

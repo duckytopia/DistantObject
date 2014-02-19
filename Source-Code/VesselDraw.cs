@@ -19,6 +19,7 @@ namespace DistantObject
         public int n = 0;
 
         public static Vessel storedTarget = null;
+        public static bool renderVessels = false;
         public static float maxDistance = 750000;
         public static int renderMode = 1;
         public static bool ignoreDebris = false;
@@ -42,6 +43,12 @@ namespace DistantObject
                         partName = a.partName;
 
                     AvailablePart avPart = PartLoader.getPartInfoByName(partName);
+
+                    if (a.modules.Find(n => n.moduleName == "LaunchClamp") != null)
+                    {
+                        if (debugMode) { print("Ignoring part " + partName); }
+                        continue;
+                    }
 
                     Part cloneO = (Part)UnityEngine.Object.Instantiate(avPart.partPrefab);
                     GameObject meshO = cloneO.FindModelTransform("model").gameObject;
@@ -117,6 +124,14 @@ namespace DistantObject
 
                     foreach (Collider col in cloneMesh.GetComponentsInChildren<Collider>())
                     {
+                        if (debugMode)
+                        {
+                            print("----------------------------------------------------");
+                            print("destroyed collider info: " + col.name);
+                            print("rigidbody thing?: " + (cloneMesh.GetComponentsInChildren<Rigidbody>().Count()));
+                            print("part name: " + partName);
+                            print("vessel name: " + shipToDraw.name);
+                        }
                         UnityEngine.Object.Destroy(col);
                     }
                     UnityEngine.Object.Destroy(cloneO);
@@ -177,47 +192,50 @@ namespace DistantObject
 
         private void Update()
         {
-            restart:
-            foreach (Vessel vessel in watchList)
+            if (renderVessels)
             {
-                if (!FlightGlobals.fetch.vessels.Contains(vessel))
+                restart:
+                foreach (Vessel vessel in watchList)
                 {
-                    if (debugMode) { print("DistObj: Erasing vessel " + vessel.vesselName + " (vessel destroyed)"); }
-
-                    if (vesselIsBuilt.ContainsKey(vessel))
-                        vesselIsBuilt.Remove(vessel);
-                    if (meshListLookup.ContainsKey(vessel))
-                        meshListLookup.Remove(vessel);
-                    watchList.Remove(vessel);
-                    workingTarget = null;
-
-                    goto restart;
-                }
-            }
-
-            if (renderMode == 0)
-            {
-                var target = FlightGlobals.fetch.VesselTarget;
-                if (target != null)
-                {
-                    if (target.GetType().Name == "Vessel")
+                    if (!FlightGlobals.fetch.vessels.Contains(vessel))
                     {
-                        workingTarget = FlightGlobals.Vessels.Find(index => index.GetName() == target.GetName());
-                        VesselCheck(workingTarget);
+                        if (debugMode) { print("DistObj: Erasing vessel " + vessel.vesselName + " (vessel destroyed)"); }
+
+                        if (vesselIsBuilt.ContainsKey(vessel))
+                            vesselIsBuilt.Remove(vessel);
+                        if (meshListLookup.ContainsKey(vessel))
+                            meshListLookup.Remove(vessel);
+                        watchList.Remove(vessel);
+                        workingTarget = null;
+
+                        goto restart;
+                    }
+                }
+
+                if (renderMode == 0)
+                {
+                    var target = FlightGlobals.fetch.VesselTarget;
+                    if (target != null)
+                    {
+                        if (target.GetType().Name == "Vessel")
+                        {
+                            workingTarget = FlightGlobals.Vessels.Find(index => index.GetName() == target.GetName());
+                            VesselCheck(workingTarget);
+                        }
+                        else if (workingTarget != null)
+                            CheckErase(workingTarget);
                     }
                     else if (workingTarget != null)
                         CheckErase(workingTarget);
                 }
-                else if (workingTarget != null)
-                    CheckErase(workingTarget);
-            }
-            else if (renderMode == 1)
-            {
-                n += 1;
-                if (n >= FlightGlobals.Vessels.Count)
-                    n = 0;
-                if (FlightGlobals.Vessels[n].vesselType != VesselType.Debris || !ignoreDebris)
-                    VesselCheck(FlightGlobals.Vessels[n]);
+                else if (renderMode == 1)
+                {
+                    n += 1;
+                    if (n >= FlightGlobals.Vessels.Count)
+                        n = 0;
+                    if (FlightGlobals.Vessels[n].vesselType != VesselType.Flag && FlightGlobals.Vessels[n].vesselType != VesselType.EVA && (FlightGlobals.Vessels[n].vesselType != VesselType.Debris || !ignoreDebris))
+                        VesselCheck(FlightGlobals.Vessels[n]);
+                }
             }
         }
 
@@ -227,6 +245,7 @@ namespace DistantObject
             ConfigNode settings = ConfigNode.Load(KSPUtil.ApplicationRootPath + "GameData/DistantObject/Settings.cfg");
             foreach (ConfigNode node in settings.GetNodes("DistantVessel"))
             {
+                renderVessels = bool.Parse(node.GetValue("renderVessels"));
                 maxDistance = float.Parse(node.GetValue("maxDistance"));
                 renderMode = int.Parse(node.GetValue("renderMode"));
                 ignoreDebris = bool.Parse(node.GetValue("ignoreDebris"));
@@ -237,6 +256,9 @@ namespace DistantObject
             referencePart.Clear();
             vesselIsBuilt.Clear();
             watchList.Clear();
+
+            if (renderVessels) { print("Distant Object Enhancement v1.2 -- VesselDraw initialized"); }
+            else { print("Distant Object Enhancement v1.2 -- VesselDraw disabled"); }
         }
     }
 }

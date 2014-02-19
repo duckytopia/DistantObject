@@ -134,6 +134,7 @@ namespace DistantObject
 
             //position, rotate, and scale mesh
             targetVectorToCam = (750000 * targetVectorToCam.normalized);
+            //targetVectorToCam *= (740000 / targetVectorToCam.magnitude);
             flareMesh.transform.position = camPos - targetVectorToCam;
             flareMesh.transform.LookAt(camPos);
             Vector3d resizeVector = new Vector3d(1, 1, 1);
@@ -256,14 +257,19 @@ namespace DistantObject
             foreach (UrlDir.UrlConfig node in GameDatabase.Instance.GetConfigs("CelestialBodyColor"))
             {
                 CelestialBody body = FlightGlobals.Bodies.Find(n => n.name == node.config.GetValue("name"));
-                Color color = ConfigNode.ParseColor(node.config.GetValue("color"));
-                color.r = 1 - (flareSaturation * (1 - (color.r / 255)));
-                color.g = 1 - (flareSaturation * (1 - (color.g / 255)));
-                color.b = 1 - (flareSaturation * (1 - (color.b / 255)));
-                color.a = 1;
-                if (!bodyColorLookup.ContainsKey(body))
-                    bodyColorLookup.Add(body, color);
+                if (FlightGlobals.Bodies.Contains(body))
+                {
+                    Color color = ConfigNode.ParseColor(node.config.GetValue("color"));
+                    color.r = 1 - (flareSaturation * (1 - (color.r / 255)));
+                    color.g = 1 - (flareSaturation * (1 - (color.g / 255)));
+                    color.b = 1 - (flareSaturation * (1 - (color.b / 255)));
+                    color.a = 1;
+                    if (!bodyColorLookup.ContainsKey(body))
+                        bodyColorLookup.Add(body, color);
+                }
             }
+
+            print("Distant Object Enhancement v1.2 -- FlareDraw initialized");
 
             StartCoroutine("StartUp");
         }
@@ -274,7 +280,7 @@ namespace DistantObject
 
             foreach (Vessel vessel in FlightGlobals.Vessels)
             {
-                if (!vessel.loaded && !vesselMeshLookup.ContainsKey(vessel) && (vessel.vesselType != VesselType.Debris || !ignoreDebris) && situations.Contains(vessel.situation.ToString()))
+                if (vessel.vesselType != VesselType.Flag && vessel.vesselType != VesselType.EVA && !vessel.loaded && !vesselMeshLookup.ContainsKey(vessel) && (vessel.vesselType != VesselType.Debris || !ignoreDebris) && situations.Contains(vessel.situation.ToString()))
                      DrawVesselFlare(vessel);
             }
 

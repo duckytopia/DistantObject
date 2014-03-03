@@ -15,6 +15,8 @@ namespace DistantObject
         public static Dictionary<Vessel, bool> vesselIsBuilt = new Dictionary<Vessel, bool>();
         public static List<Vessel> watchList = new List<Vessel>();
 
+        public static Dictionary<string, string> partModelNameLookup = new Dictionary<string, string>();
+
         public static Vessel workingTarget = null;
         public int n = 0;
 
@@ -50,10 +52,39 @@ namespace DistantObject
                         continue;
                     }
 
-                    Part cloneO = (Part)UnityEngine.Object.Instantiate(avPart.partPrefab);
-                    GameObject meshO = cloneO.FindModelTransform("model").gameObject;
-                    GameObject cloneMesh = Mesh.Instantiate(meshO) as GameObject;
+                    if(!partModelNameLookup.ContainsKey(partName))
+                    {
+                        partName = partName.Replace('.', '_');
+                        if (!partModelNameLookup.ContainsKey(partName))
+                        {
+                            if (debugMode) { print("DistObj ERROR: Could not find config definition for " + partName); }
+                            continue;
+                        }
+                    }
 
+                    GameObject clone = GameDatabase.Instance.GetModel(partModelNameLookup[partName]);
+                    if (clone == null)
+                    {
+                        if (debugMode) { print("DistObj ERROR: Could not load part model " + partModelNameLookup[partName]); }
+                        continue;
+                    }
+                    GameObject cloneMesh = Mesh.Instantiate(clone) as GameObject;
+                    DestroyObject(clone);
+                    cloneMesh.transform.SetParent(shipToDraw.transform);
+                    cloneMesh.transform.localPosition = a.position;
+                    cloneMesh.transform.localRotation = a.rotation;
+                    if (Vector3d.Distance(cloneMesh.transform.position, FlightGlobals.ship_position) < Vessel.loadDistance)
+                    {
+                        print("DistObj ERROR: Tried to draw part " + partName + " within rendering distance of active vessel!");
+                        continue;
+                    }
+                    cloneMesh.SetActive(true);
+
+                    foreach (Collider col in cloneMesh.GetComponentsInChildren<Collider>())
+                    {
+                        col.enabled = false;
+                    }
+                    
                     //check if part is a solar panel
                     ProtoPartModuleSnapshot solarPanel = a.modules.Find(n => n.moduleName == "ModuleDeployableSolarPanel");
                     if (solarPanel != null)
@@ -61,9 +92,9 @@ namespace DistantObject
                         if (solarPanel.moduleValues.GetValue("stateString") == "EXTENDED")
                         {
                             //grab the animation name specified in the part cfg
-                            string animName = cloneO.GetComponent<ModuleDeployableSolarPanel>().animationName;
+                            string animName = avPart.partPrefab.GetComponent<ModuleDeployableSolarPanel>().animationName;
                             //grab the actual animation istelf
-                            AnimationClip animClip = cloneO.FindModelAnimators().FirstOrDefault().GetClip(animName);
+                            AnimationClip animClip = avPart.partPrefab.FindModelAnimators().FirstOrDefault().GetClip(animName);
                             //grab the animation control module on the actual drawn model
                             Animation anim = cloneMesh.GetComponentInChildren<Animation>();
                             //copy the animation over to the new part!
@@ -91,9 +122,9 @@ namespace DistantObject
                         if (landingLeg.moduleValues.GetValue("savedAnimationTime") != "0")
                         {
                             //grab the animation name specified in the part cfg
-                            string animName = cloneO.GetComponent<ModuleLandingLeg>().animationName;
+                            string animName = avPart.partPrefab.GetComponent<ModuleLandingLeg>().animationName;
                             //grab the actual animation istelf
-                            AnimationClip animClip = cloneO.FindModelAnimators().FirstOrDefault().GetClip(animName);
+                            AnimationClip animClip = avPart.partPrefab.FindModelAnimators().FirstOrDefault().GetClip(animName);
                             //grab the animation control module on the actual drawn model
                             Animation anim = cloneMesh.GetComponentInChildren<Animation>();
                             //copy the animation over to the new part!
@@ -110,9 +141,9 @@ namespace DistantObject
                         if (animGeneric.moduleValues.GetValue("animTime") != "0")
                         {
                             //grab the animation name specified in the part cfg
-                            string animName = cloneO.GetComponent<ModuleAnimateGeneric>().animationName;
+                            string animName = avPart.partPrefab.GetComponent<ModuleAnimateGeneric>().animationName;
                             //grab the actual animation istelf
-                            AnimationClip animClip = cloneO.FindModelAnimators().FirstOrDefault().GetClip(animName);
+                            AnimationClip animClip = avPart.partPrefab.FindModelAnimators().FirstOrDefault().GetClip(animName);
                             //grab the animation control module on the actual drawn model
                             Animation anim = cloneMesh.GetComponentInChildren<Animation>();
                             //copy the animation over to the new part!
@@ -121,25 +152,6 @@ namespace DistantObject
                             anim[animName].normalizedTime = 1f;
                         }
                     }
-
-                    foreach (Collider col in cloneMesh.GetComponentsInChildren<Collider>())
-                    {
-                        if (debugMode)
-                        {
-                            print("----------------------------------------------------");
-                            print("destroyed collider info: " + col.name);
-                            print("rigidbody thing?: " + (cloneMesh.GetComponentsInChildren<Rigidbody>().Count()));
-                            print("part name: " + partName);
-                            print("vessel name: " + shipToDraw.name);
-                        }
-                        UnityEngine.Object.Destroy(col);
-                    }
-                    UnityEngine.Object.Destroy(cloneO);
-                    UnityEngine.GameObject.Destroy(meshO);
-
-                    cloneMesh.transform.SetParent(shipToDraw.transform);
-                    cloneMesh.transform.localPosition = a.position;
-                    cloneMesh.transform.localRotation = a.rotation;
 
                     referencePart.Add(cloneMesh, a);
                     meshListLookup[shipToDraw].Add(cloneMesh);
@@ -256,9 +268,29 @@ namespace DistantObject
             referencePart.Clear();
             vesselIsBuilt.Clear();
             watchList.Clear();
+            partModelNameLookup.Clear();
 
-            if (renderVessels) { print("Distant Object Enhancement v1.2 -- VesselDraw initialized"); }
-            else { print("Distant Object Enhancement v1.2 -- VesselDraw disabled"); }
+            foreach (UrlDir.UrlConfig urlConfig in GameDatabase.Instance.GetConfigs("PART"))
+            {
+                ConfigNode cfgNode = ConfigNode.Load(urlConfig.parent.fullPath);
+                foreach(ConfigNode node in cfgNode.nodes)
+                {
+                    if (node.GetValue("name") == urlConfig.name)
+                        cfgNode = node;
+                }
+
+                if (cfgNode.HasValue("name"))
+                {
+                    string url = urlConfig.parent.url.Substring(0, urlConfig.parent.url.LastIndexOf("/"));
+                    string model = System.IO.Path.GetFileNameWithoutExtension(cfgNode.GetValue("mesh"));
+                    partModelNameLookup.Add(urlConfig.name, url + "/" + model);
+                }
+                else
+                    print("DistObj ERROR: Could not find ConfigNode for part " + urlConfig.name);
+            }
+
+            if (renderVessels) { print("Distant Object Enhancement v1.3 -- VesselDraw initialized"); }
+            else { print("Distant Object Enhancement v1.3 -- VesselDraw disabled"); }
         }
     }
 }

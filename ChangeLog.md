@@ -1,3 +1,14 @@
+v1.3 (March 3, 2014)
+
+- Dynamic skybox fading
+- Added settings GUI
+- Vessel rendering overall should be stable now
+- Vessel rendering now creates a database of part models and draws from there, instead of cloning the part reference object
+- Vessel rendering no longer attempts to draw incompatible parts in many cases
+- Probably some other minor things
+
+----
+
 v1.2 (February 18, 2014)
 
 - Planet color definitions added for Real Solar System

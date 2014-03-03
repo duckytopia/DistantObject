@@ -24,10 +24,14 @@ namespace DistantObject
         public static Vector3d camPos;
         public static float camFOV;
         public static float atmosphereFactor = 1.0f;
+        public static float dimFactor = 1.0f;
+        public static float maxSBBrightness = 0.25f;
 
+        public static bool flaresEnabled = true;
         public static float flareSaturation = 1.0f;
         public static float flareSize = 1.0f;
-        public static bool ignoreDebris = false;
+        public static float flareBrightness = 1.0f;
+        public static bool ignoreDebrisFlare = false;
         public static float debrisBrightness = 0.15f;
         public static List<string> situations = new List<string>();
         public static bool debugMode = false;
@@ -172,7 +176,7 @@ namespace DistantObject
 
             if (targetSize < (camFOV / 500) && !inShadow && isVisible)
             {
-                color.a = atmosphereFactor;
+                color.a = atmosphereFactor * dimFactor;
                 if (targetSize > (camFOV / 1000))
                     color.a *= (float)(((camFOV / targetSize) / 500) - 1);
                 if (meshVesselLookup.ContainsKey(flareMesh))
@@ -234,6 +238,22 @@ namespace DistantObject
                 float atmThickness = (float)Math.Min(Math.Sqrt(FlightGlobals.currentMainBody.atmosphereMultiplier), 1);
                 atmosphereFactor = (atmThickness)*(atmosphereFactor) + (1 - atmThickness);
             }
+
+            dimFactor = (GalaxyCubeControl.Instance.maxGalaxyColor.r / maxSBBrightness);
+            double angCamToSun = Vector3d.Angle(FlightCamera.fetch.mainCamera.transform.forward, bodyAngle[FlightGlobals.Bodies[0]]);
+            if (angCamToSun < (camFOV / 2))
+            {
+                bool isVisible = true;
+                foreach (CelestialBody body in FlightGlobals.Bodies)
+                {
+                    if (body.bodyName != FlightGlobals.Bodies[0].bodyName && bodyDist[body] < bodyDist[FlightGlobals.Bodies[0]] && bodySize[body] > bodySize[FlightGlobals.Bodies[0]] && Vector3d.Angle(bodyAngle[body], FlightGlobals.Bodies[0].position - camPos) < bodySize[body])
+                        isVisible = false;
+                }
+                if(isVisible)
+                    dimFactor *= (float)Math.Pow(angCamToSun / (camFOV / 2), 4);
+            }
+            dimFactor = (float)(Math.Max(0.5, dimFactor));
+            dimFactor *= flareBrightness;
         }
 
         private void Awake()
@@ -242,16 +262,28 @@ namespace DistantObject
             vesselMeshLookup.Clear();
             vesselLuminosityLookup.Clear();
             bodyMeshLookup.Clear();
+            bodyColorLookup.Clear();
+            meshBlockedLookup.Clear();
+            meshRendererLookup.Clear();
+            bodyDist.Clear();
+            bodySize.Clear();
+            bodyAngle.Clear();
 
             ConfigNode settings = ConfigNode.Load(KSPUtil.ApplicationRootPath + "GameData/DistantObject/Settings.cfg");
             foreach (ConfigNode node in settings.GetNodes("DistantFlare"))
             {
+                flaresEnabled = bool.Parse(node.GetValue("flaresEnabled"));
                 flareSaturation = float.Parse(node.GetValue("flareSaturation"));
                 flareSize = float.Parse(node.GetValue("flareSize"));
-                ignoreDebris = bool.Parse(node.GetValue("ignoreDebris"));
+                flareBrightness = float.Parse(node.GetValue("flareBrightness"));
+                ignoreDebrisFlare = bool.Parse(node.GetValue("ignoreDebrisFlare"));
                 debrisBrightness = float.Parse(node.GetValue("debrisBrightness"));
                 debugMode = bool.Parse(node.GetValue("debugMode"));
                 situations = node.GetValue("situations").Split(',').ToList();
+            }
+            foreach (ConfigNode node in settings.GetNodes("SkyboxBrightness"))
+            {
+                maxSBBrightness = float.Parse(node.GetValue("maxBrightness"));
             }
 
             foreach (UrlDir.UrlConfig node in GameDatabase.Instance.GetConfigs("CelestialBodyColor"))
@@ -268,42 +300,48 @@ namespace DistantObject
                         bodyColorLookup.Add(body, color);
                 }
             }
+            if (flaresEnabled)
+                print("Distant Object Enhancement v1.3 -- FlareDraw initialized");
+            else
+                print("Distant Object Enhancement v1.3 -- FlareDraw disabled");
 
-            print("Distant Object Enhancement v1.2 -- FlareDraw initialized");
-
-            StartCoroutine("StartUp");
+            if (flaresEnabled)
+                StartCoroutine("StartUp");
         }
 
         private void Update()
         {
-            UpdateVar();
-
-            foreach (Vessel vessel in FlightGlobals.Vessels)
+            if (flaresEnabled)
             {
-                if (vessel.vesselType != VesselType.Flag && vessel.vesselType != VesselType.EVA && !vessel.loaded && !vesselMeshLookup.ContainsKey(vessel) && (vessel.vesselType != VesselType.Debris || !ignoreDebris) && situations.Contains(vessel.situation.ToString()))
-                     DrawVesselFlare(vessel);
-            }
+                UpdateVar();
 
-            restart:
-            foreach (GameObject flareMesh in meshVesselLookup.Keys)
-            {
-                if (meshVesselLookup[flareMesh] == null || meshVesselLookup[flareMesh].loaded || !situations.Contains(meshVesselLookup[flareMesh].situation.ToString()))
+                foreach (Vessel vessel in FlightGlobals.Vessels)
                 {
-                    if (debugMode) { print("DistObj: Erasing flare for vessel " + flareMesh.name); }
-                    meshRendererLookup.Remove(flareMesh);
-                    vesselMeshLookup.Remove(meshVesselLookup[flareMesh]);
-                    vesselLuminosityLookup.Remove(meshVesselLookup[flareMesh]);
-                    meshVesselLookup.Remove(flareMesh);
-                    DestroyObject(flareMesh);
-                    goto restart;
+                    if (vessel.vesselType != VesselType.Flag && vessel.vesselType != VesselType.EVA && !vessel.loaded && !vesselMeshLookup.ContainsKey(vessel) && (vessel.vesselType != VesselType.Debris || !ignoreDebrisFlare) && situations.Contains(vessel.situation.ToString()))
+                         DrawVesselFlare(vessel);
                 }
 
-                UpdateVesselFlare(flareMesh);
-            }
+                restart:
+                foreach (GameObject flareMesh in meshVesselLookup.Keys)
+                {
+                    if (meshVesselLookup[flareMesh] == null || meshVesselLookup[flareMesh].loaded || !situations.Contains(meshVesselLookup[flareMesh].situation.ToString()))
+                    {
+                        if (debugMode) { print("DistObj: Erasing flare for vessel " + flareMesh.name); }
+                        meshRendererLookup.Remove(flareMesh);
+                        vesselMeshLookup.Remove(meshVesselLookup[flareMesh]);
+                        vesselLuminosityLookup.Remove(meshVesselLookup[flareMesh]);
+                        meshVesselLookup.Remove(flareMesh);
+                        DestroyObject(flareMesh);
+                        goto restart;
+                    }
 
-            foreach (CelestialBody targetBody in bodyMeshLookup.Keys)
-            {
-                UpdateBodyFlare(targetBody);
+                    UpdateVesselFlare(flareMesh);
+                }
+
+                foreach (CelestialBody targetBody in bodyMeshLookup.Keys)
+                {
+                    UpdateBodyFlare(targetBody);
+                }
             }
         }
 

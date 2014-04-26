@@ -36,6 +36,9 @@ namespace DistantObject
         public static List<string> situations = new List<string>();
         public static bool debugMode = false;
 
+        public static bool showNames = true;
+        public static CelestialBody nameShownBody = null;
+
         public static Dictionary<GameObject, Vector3d> debugDeltaPos = new Dictionary<GameObject, Vector3d>();
 
         public static void DrawVesselFlare(Vessel referenceShip)
@@ -256,6 +259,33 @@ namespace DistantObject
             dimFactor *= flareBrightness;
         }
 
+        private void UpdateNameShown()
+        {
+            if (showNames && !MapView.MapIsEnabled)
+            {
+                nameShownBody = null;
+                Ray mouseRay = FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition);
+                foreach (CelestialBody targetBody in bodyMeshLookup.Keys)
+                {
+                    if (targetBody == FlightGlobals.ActiveVessel.mainBody) continue;
+                    Vector3d vectorToBody = targetBody.position - mouseRay.origin;
+                    double mouseBodyAngle = Vector3d.Angle(vectorToBody, mouseRay.direction);
+                    if (mouseBodyAngle < 1.0)
+                    {
+                        if (nameShownBody == null || targetBody.Radius > nameShownBody.Radius)
+                        {
+                            double distance = Vector3d.Distance(FlightCamera.fetch.mainCamera.transform.position, targetBody.position);
+                            double angularSize = (180 / Math.PI) * targetBody.Radius / distance;
+                            if (angularSize < 0.2)
+                            {
+                                nameShownBody = targetBody;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
         private void Awake()
         {
             meshVesselLookup.Clear();
@@ -280,6 +310,7 @@ namespace DistantObject
                 debrisBrightness = float.Parse(node.GetValue("debrisBrightness"));
                 debugMode = bool.Parse(node.GetValue("debugMode"));
                 situations = node.GetValue("situations").Split(',').ToList();
+                showNames = bool.Parse(node.GetValue("showNames"));
             }
             foreach (ConfigNode node in settings.GetNodes("SkyboxBrightness"))
             {
@@ -342,6 +373,23 @@ namespace DistantObject
                 {
                     UpdateBodyFlare(targetBody);
                 }
+
+                UpdateNameShown();
+            }
+        }
+
+        private void OnGUI()
+        {
+            if (flaresEnabled && showNames && !MapView.MapIsEnabled && nameShownBody != null)
+            {
+                Vector3 screenPos = FlightCamera.fetch.mainCamera.WorldToScreenPoint(nameShownBody.position);
+                Rect screenRect = new Rect(screenPos.x, Screen.height - screenPos.y - 20, 100, 20);
+                Color bodyColor = Color.white;
+                if (bodyColorLookup.ContainsKey(nameShownBody))
+                    bodyColor = bodyColorLookup[nameShownBody];
+                GUIStyle s = new GUIStyle();
+                s.normal.textColor = bodyColor;
+                GUI.Label(screenRect, nameShownBody.bodyName, s);
             }
         }
 

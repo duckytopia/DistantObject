@@ -301,6 +301,7 @@ namespace DistantObject
                     double bestBrightness = 0.25; // min luminosity to show vessel name
                     foreach (Vessel v in vesselMeshLookup.Keys)
                     {
+                        if (v == null) continue; // After KSP destroys a vessel it becomes == to null.
                         GameObject mesh = vesselMeshLookup[v];
                         if(!meshRendererLookup.ContainsKey(mesh)) continue;
                         MeshRenderer flareMR = meshRendererLookup[mesh];

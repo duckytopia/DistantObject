@@ -16,6 +16,9 @@ namespace DistantObject
 
         public void Awake()
         {
+            if (GalaxyCubeControl.Instance == null)
+                return;
+
             //Load settings
             ConfigNode settings = ConfigNode.Load(KSPUtil.ApplicationRootPath + "GameData/DistantObject/Settings.cfg");
             foreach (ConfigNode node in settings.GetNodes("SkyboxBrightness"))

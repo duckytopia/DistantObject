@@ -1,3 +1,13 @@
+v1.3.1 (July 29, 2014)
+
+Patch by MOARdV
+
+- 0.24 compatibility
+- Two null reference exceptions fixed
+- Removed System.Threading.Tasks
+
+----
+
 v1.3 (March 3, 2014)
 
 - Dynamic skybox fading

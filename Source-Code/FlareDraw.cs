@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace DistantObject
@@ -193,7 +192,7 @@ namespace DistantObject
 
         private void UpdateVar()
         {
-            camPos = FlightCamera.fetch.mainCamera.transform.position;;
+            camPos = FlightCamera.fetch.mainCamera.transform.position;
             camFOV = FlightCamera.fetch.mainCamera.fieldOfView;
 
             foreach (CelestialBody body in FlightGlobals.Bodies)
@@ -216,7 +215,7 @@ namespace DistantObject
             }
 
             atmosphereFactor = 1;
-            if (FlightGlobals.currentMainBody.atmosphere)
+            if (FlightGlobals.currentMainBody != null && FlightGlobals.currentMainBody.atmosphere)
             {
                 double camAltitude = FlightGlobals.currentMainBody.GetAltitude(camPos);
                 double atmAltitude = FlightGlobals.currentMainBody.maxAtmosphereAltitude;

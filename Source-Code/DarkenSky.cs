@@ -2,7 +2,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
 namespace DistantObject
@@ -27,11 +26,14 @@ namespace DistantObject
             maxColor.r = maxBrightness;
             maxColor.b = maxBrightness;
             maxColor.g = maxBrightness;
-            GalaxyCubeControl.Instance.maxGalaxyColor = maxColor;
-
-            if(changeSkybox)
+            if (GalaxyCubeControl.Instance != null)
             {
-                GalaxyCubeControl.Instance.glareFadeLimit = 1f;
+                GalaxyCubeControl.Instance.maxGalaxyColor = maxColor;
+
+                if (changeSkybox)
+                {
+                    GalaxyCubeControl.Instance.glareFadeLimit = 1f;
+                }
             }
 
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER)

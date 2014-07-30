@@ -21,6 +21,7 @@ namespace DistantObject
         private float flareBrightness = 1.0f;
         private bool ignoreDebrisFlare = false;
         private float debrisBrightness = 0.15f;
+        private bool showNames = false;
         private bool renderVessels = false;
         private float maxDistance = 750000f;
         private int renderMode = 1;
@@ -56,7 +57,8 @@ namespace DistantObject
                 flareBrightness = float.Parse(node.GetValue("flareBrightness"));
                 ignoreDebrisFlare = bool.Parse(node.GetValue("ignoreDebrisFlare"));
                 debrisBrightness = float.Parse(node.GetValue("debrisBrightness"));
-                debugMode = bool.Parse(node.GetValue("debugMode"));                
+                debugMode = bool.Parse(node.GetValue("debugMode"));
+                showNames = bool.Parse(node.GetValue("showNames"));
             }
 
             foreach (ConfigNode node in settings.GetNodes("DistantVessel"))
@@ -142,6 +144,12 @@ namespace DistantObject
                     settings.GetNode("DistantFlare").SetValue("debrisBrightness", "" + debrisBrightness);
                     GUILayout.Label(string.Format("{0:0}", 100 * debrisBrightness) + "%");
                     GUILayout.EndHorizontal();
+                }
+
+                if (GUILayout.Button(GetStatus(!showNames) + " showing body names on mouseover"))
+                {
+                    showNames = !showNames;
+                    settings.GetNode("DistantFlare").SetValue("showNames", "" + showNames);
                 }
             }
 

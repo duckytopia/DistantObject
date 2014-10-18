@@ -55,6 +55,7 @@ namespace DistantObject
             }
 
             MeshRenderer flareMR = flareMesh.GetComponentInChildren<MeshRenderer>();
+            flareMR.gameObject.layer = 10;
             flareMR.material.shader = Shader.Find("KSP/Alpha/Unlit Transparent");
             flareMR.material.color = Color.white;
             flareMR.castShadows = false;
@@ -83,6 +84,7 @@ namespace DistantObject
             flareMesh.SetActive(true);
 
             MeshRenderer flareMR = flareMesh.GetComponentInChildren<MeshRenderer>();
+            flareMR.gameObject.layer = 10;
             flareMR.material.shader = Shader.Find("KSP/Alpha/Unlit Transparent");
             Color color = Color.white;
             if (bodyColorLookup.ContainsKey(referenceBody))

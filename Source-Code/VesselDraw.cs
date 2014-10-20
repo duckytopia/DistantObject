@@ -9,28 +9,26 @@ namespace DistantObject
     [KSPAddon(KSPAddon.Startup.Flight, false)]
     public class VesselDraw : MonoBehaviour
     {
-        public static Dictionary<Vessel, List<GameObject>> meshListLookup = new Dictionary<Vessel, List<GameObject>>();
-        public static Dictionary<GameObject, ProtoPartSnapshot> referencePart = new Dictionary<GameObject, ProtoPartSnapshot>();
-        public static Dictionary<Vessel, bool> vesselIsBuilt = new Dictionary<Vessel, bool>();
-        public static List<Vessel> watchList = new List<Vessel>();
+        private static Dictionary<Vessel, List<GameObject>> meshListLookup = new Dictionary<Vessel, List<GameObject>>();
+        private static Dictionary<GameObject, ProtoPartSnapshot> referencePart = new Dictionary<GameObject, ProtoPartSnapshot>();
+        private static Dictionary<Vessel, bool> vesselIsBuilt = new Dictionary<Vessel, bool>();
+        private static List<Vessel> watchList = new List<Vessel>();
 
-        public static Dictionary<string, string> partModelNameLookup = new Dictionary<string, string>();
+        private static Dictionary<string, string> partModelNameLookup = new Dictionary<string, string>();
 
-        public static Vessel workingTarget = null;
-        public int n = 0;
+        private static Vessel workingTarget = null;
+        private int n = 0;
 
-        public static Vessel storedTarget = null;
-        public static bool renderVessels = false;
-        public static float maxDistance = 750000;
-        public static int renderMode = 1;
-        public static bool ignoreDebris = false;
-        public static bool debugMode = false;
+        //public static Vessel storedTarget = null;
 
         public static void DrawVessel(Vessel shipToDraw)
         {
             if (!vesselIsBuilt[shipToDraw])
             {
-                if (debugMode) { print("DistObj: Drawing vessel " + shipToDraw.vesselName); }
+                if (DistantObjectSettings.debugMode)
+                {
+                    print("DistObj: Drawing vessel " + shipToDraw.vesselName);
+                }
 
                 vesselIsBuilt[shipToDraw] = true;
 
@@ -39,15 +37,23 @@ namespace DistantObject
                 {
                     string partName;
                     if (a.refTransformName.Contains(" "))
+                    {
                         partName = a.partName.Substring(0, a.refTransformName.IndexOf(" "));
+                    }
                     else
+                    {
                         partName = a.partName;
+                    }
 
                     AvailablePart avPart = PartLoader.getPartInfoByName(partName);
 
                     if (a.modules.Find(n => n.moduleName == "LaunchClamp") != null)
                     {
-                        if (debugMode) { print("Ignoring part " + partName); }
+                        if (DistantObjectSettings.debugMode)
+                        {
+                            print("Ignoring part " + partName);
+                        }
+
                         continue;
                     }
 
@@ -56,7 +62,10 @@ namespace DistantObject
                         partName = partName.Replace('.', '_');
                         if (!partModelNameLookup.ContainsKey(partName))
                         {
-                            if (debugMode) { print("DistObj ERROR: Could not find config definition for " + partName); }
+                            if (DistantObjectSettings.debugMode)
+                            {
+                                print("DistObj ERROR: Could not find config definition for " + partName);
+                            }
                             continue;
                         }
                     }
@@ -64,7 +73,10 @@ namespace DistantObject
                     GameObject clone = GameDatabase.Instance.GetModel(partModelNameLookup[partName]);
                     if (clone == null)
                     {
-                        if (debugMode) { print("DistObj ERROR: Could not load part model " + partModelNameLookup[partName]); }
+                        if (DistantObjectSettings.debugMode)
+                        {
+                            print("DistObj ERROR: Could not load part model " + partModelNameLookup[partName]);
+                        }
                         continue;
                     }
                     GameObject cloneMesh = Mesh.Instantiate(clone) as GameObject;
@@ -162,7 +174,10 @@ namespace DistantObject
         {
             if (vesselIsBuilt[shipToErase])
             {
-                if (debugMode) { print("DistObj: Erasing vessel " + shipToErase.vesselName + " (vessel unloaded)"); }
+                if (DistantObjectSettings.debugMode)
+                {
+                    print("DistObj: Erasing vessel " + shipToErase.vesselName + " (vessel unloaded)");
+                }
 
                 foreach (GameObject mesh in meshListLookup[shipToErase])
                 {
@@ -177,14 +192,17 @@ namespace DistantObject
 
         public static void VesselCheck(Vessel shipToCheck)
         {
-            if (Vector3d.Distance(shipToCheck.GetWorldPos3D(), FlightGlobals.ship_position) < maxDistance && !shipToCheck.loaded)
+            if (Vector3d.Distance(shipToCheck.GetWorldPos3D(), FlightGlobals.ship_position) < DistantObjectSettings.DistantVessel.maxDistance && !shipToCheck.loaded)
             {
                 if (!vesselIsBuilt.ContainsKey(shipToCheck))
                 {
                     meshListLookup.Add(shipToCheck, new List<GameObject>());
                     vesselIsBuilt.Add(shipToCheck, false);
                     watchList.Add(shipToCheck);
-                    if (debugMode) { print("DistObj: Adding new definition for " + shipToCheck.vesselName); }
+                    if (DistantObjectSettings.debugMode)
+                    {
+                        print("DistObj: Adding new definition for " + shipToCheck.vesselName);
+                    }
                 }
                 DrawVessel(shipToCheck);
             }
@@ -195,7 +213,10 @@ namespace DistantObject
                     meshListLookup.Add(shipToCheck, new List<GameObject>());
                     vesselIsBuilt.Add(shipToCheck, false);
                     watchList.Add(shipToCheck);
-                    if (debugMode) { print("DistObj: Adding new definition for " + shipToCheck.vesselName); }
+                    if (DistantObjectSettings.debugMode)
+                    {
+                        print("DistObj: Adding new definition for " + shipToCheck.vesselName);
+                    }
                 }
                 CheckErase(shipToCheck);
             }
@@ -203,19 +224,26 @@ namespace DistantObject
 
         private void Update()
         {
-            if (renderVessels)
+            if (DistantObjectSettings.DistantVessel.renderVessels)
             {
                 restart:
                 foreach (Vessel vessel in watchList)
                 {
                     if (!FlightGlobals.fetch.vessels.Contains(vessel))
                     {
-                        if (debugMode) { print("DistObj: Erasing vessel " + vessel.vesselName + " (vessel destroyed)"); }
+                        if (DistantObjectSettings.debugMode)
+                        {
+                            print("DistObj: Erasing vessel " + vessel.vesselName + " (vessel destroyed)");
+                        }
 
                         if (vesselIsBuilt.ContainsKey(vessel))
+                        {
                             vesselIsBuilt.Remove(vessel);
+                        }
                         if (meshListLookup.ContainsKey(vessel))
+                        {
                             meshListLookup.Remove(vessel);
+                        }
                         watchList.Remove(vessel);
                         workingTarget = null;
 
@@ -223,7 +251,7 @@ namespace DistantObject
                     }
                 }
 
-                if (renderMode == 0)
+                if (DistantObjectSettings.DistantVessel.renderMode == 0)
                 {
                     var target = FlightGlobals.fetch.VesselTarget;
                     if (target != null)
@@ -234,18 +262,26 @@ namespace DistantObject
                             VesselCheck(workingTarget);
                         }
                         else if (workingTarget != null)
+                        {
                             CheckErase(workingTarget);
+                        }
                     }
                     else if (workingTarget != null)
+                    {
                         CheckErase(workingTarget);
+                    }
                 }
-                else if (renderMode == 1)
+                else if (DistantObjectSettings.DistantVessel.renderMode == 1)
                 {
                     n += 1;
                     if (n >= FlightGlobals.Vessels.Count)
+                    {
                         n = 0;
-                    if (FlightGlobals.Vessels[n].vesselType != VesselType.Flag && FlightGlobals.Vessels[n].vesselType != VesselType.EVA && (FlightGlobals.Vessels[n].vesselType != VesselType.Debris || !ignoreDebris))
+                    }
+                    if (FlightGlobals.Vessels[n].vesselType != VesselType.Flag && FlightGlobals.Vessels[n].vesselType != VesselType.EVA && (FlightGlobals.Vessels[n].vesselType != VesselType.Debris || !DistantObjectSettings.DistantVessel.ignoreDebris))
+                    {
                         VesselCheck(FlightGlobals.Vessels[n]);
+                    }
                 }
             }
         }
@@ -253,15 +289,7 @@ namespace DistantObject
         public void Awake()
         {
             //Load settings
-            ConfigNode settings = ConfigNode.Load(KSPUtil.ApplicationRootPath + "GameData/DistantObject/Settings.cfg");
-            foreach (ConfigNode node in settings.GetNodes("DistantVessel"))
-            {
-                renderVessels = bool.Parse(node.GetValue("renderVessels"));
-                maxDistance = float.Parse(node.GetValue("maxDistance"));
-                renderMode = int.Parse(node.GetValue("renderMode"));
-                ignoreDebris = bool.Parse(node.GetValue("ignoreDebris"));
-                debugMode = bool.Parse(node.GetValue("debugMode"));
-            }
+            DistantObjectSettings.LoadConfig();
 
             meshListLookup.Clear();
             referencePart.Clear();
@@ -275,7 +303,9 @@ namespace DistantObject
                 foreach(ConfigNode node in cfgNode.nodes)
                 {
                     if (node.GetValue("name") == urlConfig.name)
+                    {
                         cfgNode = node;
+                    }
                 }
 
                 if (cfgNode.HasValue("name"))
@@ -285,11 +315,19 @@ namespace DistantObject
                     partModelNameLookup.Add(urlConfig.name, url + "/" + model);
                 }
                 else
+                {
                     print("DistObj ERROR: Could not find ConfigNode for part " + urlConfig.name);
+                }
             }
 
-            if (renderVessels) { print("Distant Object Enhancement v1.3 -- VesselDraw initialized"); }
-            else { print("Distant Object Enhancement v1.3 -- VesselDraw disabled"); }
+            if (DistantObjectSettings.DistantVessel.renderVessels)
+            {
+                print(Constants.DistantObject + " -- VesselDraw initialized");
+            }
+            else
+            {
+                print(Constants.DistantObject + " -- VesselDraw disabled");
+            }
         }
     }
 }

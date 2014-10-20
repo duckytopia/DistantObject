@@ -1,28 +1,19 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace DistantObject
 {
-    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
+    // MOARdV TODO: Why was this EveryScene?
+    [KSPAddon(KSPAddon.Startup.Flight, false)]
+    //[KSPAddon(KSPAddon.Startup.EveryScene, false)]
     class DarkenSky : MonoBehaviour
     {
-        private bool changeSkybox = false;
-        private float maxBrightness = 1.0f;
         private Color maxColor = Color.black;
 
         public void Awake()
         {
-            //Load settings
-            ConfigNode settings = ConfigNode.Load(KSPUtil.ApplicationRootPath + "GameData/DistantObject/Settings.cfg");
-            foreach (ConfigNode node in settings.GetNodes("SkyboxBrightness"))
-            {
-                changeSkybox = bool.Parse(node.GetValue("changeSkybox"));
-                maxBrightness = float.Parse(node.GetValue("maxBrightness"));
-            }
-
+            DistantObjectSettings.LoadConfig();
+            float maxBrightness = DistantObjectSettings.SkyboxBrightness.maxBrightness;
             maxColor.r = maxBrightness;
             maxColor.b = maxBrightness;
             maxColor.g = maxBrightness;
@@ -30,21 +21,16 @@ namespace DistantObject
             {
                 GalaxyCubeControl.Instance.maxGalaxyColor = maxColor;
 
-                if (changeSkybox)
+                if (DistantObjectSettings.SkyboxBrightness.changeSkybox)
                 {
                     GalaxyCubeControl.Instance.glareFadeLimit = 1f;
                 }
-            }
-
-            if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
-            {
-                InvokeRepeating("SpaceCenterUpdate", 0.5f, 0.5f);
             }
         }
 
         public void Update()
         {
-            if (changeSkybox && HighLogic.LoadedSceneIsFlight)
+            if (DistantObjectSettings.SkyboxBrightness.changeSkybox && HighLogic.LoadedSceneIsFlight)
             {
                 Color color = maxColor;
 
@@ -80,22 +66,6 @@ namespace DistantObject
 
                 GalaxyCubeControl.Instance.maxGalaxyColor = color;
             }
-        }
-
-        private void SpaceCenterUpdate()
-        {
-            //Load settings
-            ConfigNode settings = ConfigNode.Load(KSPUtil.ApplicationRootPath + "GameData/DistantObject/Settings.cfg");
-            foreach (ConfigNode node in settings.GetNodes("SkyboxBrightness"))
-            {
-                changeSkybox = bool.Parse(node.GetValue("changeSkybox"));
-                maxBrightness = float.Parse(node.GetValue("maxBrightness"));
-            }
-
-            maxColor.r = maxBrightness;
-            maxColor.b = maxBrightness;
-            maxColor.g = maxBrightness;
-            GalaxyCubeControl.Instance.maxGalaxyColor = maxColor;
         }
     }
 }

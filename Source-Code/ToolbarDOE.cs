@@ -5,7 +5,7 @@ namespace DistantObject
 {
     public partial class SettingsGui : MonoBehaviour
     {
-        public static IButton buttonDOSettings;
+        public static IButton buttonDOSettings = null;
 
         private void toolbarButton()
         {
@@ -39,7 +39,10 @@ namespace DistantObject
 
         private void OnDestroy()
         {
-            buttonDOSettings.Destroy();
+            if (buttonDOSettings != null)
+            {
+                buttonDOSettings.Destroy();
+            }
         }
     }
 }

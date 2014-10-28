@@ -3,7 +3,7 @@ using UnityEngine;
 namespace DistantObject
 {
     // MOARdV TODO: Make this usable in space center and flight
-    [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
+    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     partial class SettingsGui : MonoBehaviour
     {
         protected Rect windowPos = new Rect(Screen.width / 4, Screen.height / 4, 10f, 10f);
@@ -79,23 +79,27 @@ namespace DistantObject
 
         public void Awake()
         {
-            print(Constants.DistantObject + " -- SettingsGUI initialized");
-            foreach (AssemblyLoader.LoadedAssembly assembly in AssemblyLoader.loadedAssemblies)
+            // Load and configure once
+            if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
-                if (assembly.name == "Toolbar")
+                print(Constants.DistantObject + " -- SettingsGUI initialized");
+                foreach (AssemblyLoader.LoadedAssembly assembly in AssemblyLoader.loadedAssemblies)
                 {
-                    toolbarInstalled = true;
+                    if (assembly.name == "Toolbar")
+                    {
+                        toolbarInstalled = true;
+                    }
                 }
-            }
-            if (toolbarInstalled)
-            {
-                toolbarButton();
-            }
+                if (toolbarInstalled)
+                {
+                    toolbarButton();
+                }
 
-            RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));
+                RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));
 
-            //Load settings
-            ReadSettings();
+                //Load settings
+                ReadSettings();
+            }
         }
 
         private void mainGUI(int windowID)
@@ -261,15 +265,18 @@ namespace DistantObject
 
         private void drawGUI()
         {
-            if (activated)
+            if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
-                if(!isActivated)
+                if (activated)
                 {
-                    ReadSettings();
+                    if (!isActivated)
+                    {
+                        ReadSettings();
+                    }
+                    windowPos = GUILayout.Window(-5234628, windowPos, mainGUI, Constants.DistantObject + " Settings", GUILayout.Width(300), GUILayout.Height(200));
                 }
-                windowPos = GUILayout.Window(-5234628, windowPos, mainGUI, Constants.DistantObject + " Settings", GUILayout.Width(300), GUILayout.Height(200));
+                isActivated = activated;
             }
-            isActivated = activated;
         }
 
         private void Reset()

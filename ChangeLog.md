@@ -1,3 +1,14 @@
+v1.4 (November 2014) Distant Object Enhancement bis
+
+- 0.25 compatibility
+- Potential NULL reference exceptions when vessels are destroyed fixed (Anatid)
+- Ability to show labels on flares (planets and visible vessels) (Anatid)
+- Moved flares to a different rendering layer so they're not affected by lighting illuminating the vessel, such as the PlanetShine mod ()
+- Changed GUI (MOARdV)
+- Enabled GUI in Flight in addition to Space Centre view (MOARdV)
+
+----
+
 v1.3.1 (July 29, 2014)
 
 Patch by MOARdV

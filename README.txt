@@ -3,10 +3,13 @@ Distant Object Enhancement
 
 This plugin renders effects for distant objects in Kerbal Space Program.
 
+Original plugin by Rubber Ducky.
+
+Distant Object Enhancement bis by MOARdV.
 
 
 
-Forum thread:
+Original Forum thread:
 http://forum.kerbalspaceprogram.com/threads/69907
 
 

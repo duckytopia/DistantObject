@@ -68,77 +68,80 @@ namespace DistantObject
 
             ConfigNode settings = ConfigNode.Load(KSPUtil.ApplicationRootPath + configFileName);
 
-            if(settings.HasNode("DistantFlare"))
+            if (settings != null)
             {
-                ConfigNode distantFlare = settings.GetNode("DistantFlare");
+                if (settings.HasNode("DistantFlare"))
+                {
+                    ConfigNode distantFlare = settings.GetNode("DistantFlare");
 
-                if (distantFlare.HasValue("flaresEnabled"))
-                {
-                    DistantFlare.flaresEnabled = bool.Parse(distantFlare.GetValue("flaresEnabled"));
+                    if (distantFlare.HasValue("flaresEnabled"))
+                    {
+                        DistantFlare.flaresEnabled = bool.Parse(distantFlare.GetValue("flaresEnabled"));
+                    }
+                    if (distantFlare.HasValue("flareSaturation"))
+                    {
+                        DistantFlare.flareSaturation = float.Parse(distantFlare.GetValue("flareSaturation"));
+                    }
+                    if (distantFlare.HasValue("flareSize"))
+                    {
+                        DistantFlare.flareSize = float.Parse(distantFlare.GetValue("flareSize"));
+                    }
+                    if (distantFlare.HasValue("flareBrightness"))
+                    {
+                        DistantFlare.flareBrightness = float.Parse(distantFlare.GetValue("flareBrightness"));
+                    }
+                    if (distantFlare.HasValue("ignoreDebrisFlare"))
+                    {
+                        DistantFlare.ignoreDebrisFlare = bool.Parse(distantFlare.GetValue("ignoreDebrisFlare"));
+                    }
+                    if (distantFlare.HasValue("debrisBrightness"))
+                    {
+                        DistantFlare.debrisBrightness = float.Parse(distantFlare.GetValue("debrisBrightness"));
+                    }
+                    if (distantFlare.HasValue("showNames"))
+                    {
+                        DistantFlare.showNames = bool.Parse(distantFlare.GetValue("showNames"));
+                    }
+                    if (distantFlare.HasValue("debugMode"))
+                    {
+                        debugMode = bool.Parse(distantFlare.GetValue("debugMode"));
+                    }
                 }
-                if (distantFlare.HasValue("flareSaturation"))
-                {
-                    DistantFlare.flareSaturation = float.Parse(distantFlare.GetValue("flareSaturation"));
-                }
-                if (distantFlare.HasValue("flareSize"))
-                {
-                    DistantFlare.flareSize = float.Parse(distantFlare.GetValue("flareSize"));
-                }
-                if (distantFlare.HasValue("flareBrightness"))
-                {
-                    DistantFlare.flareBrightness = float.Parse(distantFlare.GetValue("flareBrightness"));
-                }
-                if (distantFlare.HasValue("ignoreDebrisFlare"))
-                {
-                    DistantFlare.ignoreDebrisFlare = bool.Parse(distantFlare.GetValue("ignoreDebrisFlare"));
-                }
-                if (distantFlare.HasValue("debrisBrightness"))
-                {
-                    DistantFlare.debrisBrightness = float.Parse(distantFlare.GetValue("debrisBrightness"));
-                }
-                if (distantFlare.HasValue("showNames"))
-                {
-                    DistantFlare.showNames = bool.Parse(distantFlare.GetValue("showNames"));
-                }
-                if (distantFlare.HasValue("debugMode"))
-                {
-                    debugMode = bool.Parse(distantFlare.GetValue("debugMode"));
-                }
-            }
 
-            if (settings.HasNode("DistantVessel"))
-            {
-                ConfigNode distantVessel = settings.GetNode("DistantVessel");
+                if (settings.HasNode("DistantVessel"))
+                {
+                    ConfigNode distantVessel = settings.GetNode("DistantVessel");
 
-                if (distantVessel.HasValue("renderVessels"))
-                {
-                    DistantVessel.renderVessels = bool.Parse(distantVessel.GetValue("renderVessels"));
+                    if (distantVessel.HasValue("renderVessels"))
+                    {
+                        DistantVessel.renderVessels = bool.Parse(distantVessel.GetValue("renderVessels"));
+                    }
+                    if (distantVessel.HasValue("maxDistance"))
+                    {
+                        DistantVessel.maxDistance = float.Parse(distantVessel.GetValue("maxDistance"));
+                    }
+                    if (distantVessel.HasValue("renderMode"))
+                    {
+                        DistantVessel.renderMode = int.Parse(distantVessel.GetValue("renderMode"));
+                    }
+                    if (distantVessel.HasValue("ignoreDebris"))
+                    {
+                        DistantVessel.ignoreDebris = bool.Parse(distantVessel.GetValue("ignoreDebris"));
+                    }
                 }
-                if (distantVessel.HasValue("maxDistance"))
-                {
-                    DistantVessel.maxDistance = float.Parse(distantVessel.GetValue("maxDistance"));
-                }
-                if (distantVessel.HasValue("renderMode"))
-                {
-                    DistantVessel.renderMode = int.Parse(distantVessel.GetValue("renderMode"));
-                }
-                if (distantVessel.HasValue("ignoreDebris"))
-                {
-                    DistantVessel.ignoreDebris = bool.Parse(distantVessel.GetValue("ignoreDebris"));
-                }
-            }
 
-            if (settings.HasNode("SkyboxBrightness"))
-            {
-                ConfigNode skyboxBrightness = settings.GetNode("SkyboxBrightness");
+                if (settings.HasNode("SkyboxBrightness"))
+                {
+                    ConfigNode skyboxBrightness = settings.GetNode("SkyboxBrightness");
 
-                if (skyboxBrightness.HasValue("changeSkybox"))
-                {
-                    SkyboxBrightness.changeSkybox = bool.Parse(skyboxBrightness.GetValue("changeSkybox"));
-                }
-                if (skyboxBrightness.HasValue("debrisBrightness"))
-                {
-                    SkyboxBrightness.maxBrightness = float.Parse(skyboxBrightness.GetValue("maxBrightness"));
+                    if (skyboxBrightness.HasValue("changeSkybox"))
+                    {
+                        SkyboxBrightness.changeSkybox = bool.Parse(skyboxBrightness.GetValue("changeSkybox"));
+                    }
+                    if (skyboxBrightness.HasValue("debrisBrightness"))
+                    {
+                        SkyboxBrightness.maxBrightness = float.Parse(skyboxBrightness.GetValue("maxBrightness"));
+                    }
                 }
             }
 

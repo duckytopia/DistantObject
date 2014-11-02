@@ -7,6 +7,8 @@ Original plugin by duckytopia (Rubber Ducky on the KSP forum).
 
 Distant Object Enhancement bis by MOARdV.
 
+Known Issues:
+When Flare Labels are enabled, they show up even if the flare is blocked by a planet / moon / Kerbol.
 
 Original Forum thread:
 http://forum.kerbalspaceprogram.com/threads/69907

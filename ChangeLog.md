@@ -1,11 +1,11 @@
-v1.4 (November 2014) Distant Object Enhancement bis
+v1.4 (November 2, 2014) Distant Object Enhancement bis
 
 - 0.25 compatibility
 - Potential NULL reference exceptions when vessels are destroyed fixed (Anatid)
 - Ability to show labels on flares (planets and visible vessels) (Anatid)
-- Moved flares to a different rendering layer so they're not affected by lighting illuminating the vessel, such as the PlanetShine mod ()
+- Moved flares to a different rendering layer so they're not affected by lighting illuminating the vessel, such as the PlanetShine mod (Valerian)
 - Changed GUI (MOARdV)
-- Enabled GUI in Flight in addition to Space Centre view (MOARdV)
+- Enabled GUI in Flight in addition to Space Center view (MOARdV)
 
 ----
 

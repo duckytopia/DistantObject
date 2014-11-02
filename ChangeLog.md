@@ -6,6 +6,8 @@ v1.4 (November 2, 2014) Distant Object Enhancement bis
 - Moved flares to a different rendering layer so they're not affected by lighting illuminating the vessel, such as the PlanetShine mod (Valerian)
 - Changed GUI (MOARdV)
 - Enabled GUI in Flight in addition to Space Center view (MOARdV)
+- More robust handling of missing config file or missing config entries (MOARdV)
+
 
 ----
 

@@ -20,6 +20,9 @@ Known Issues:
 
 - Some settings changed during flight do not take effect immediately (must go back to the space center before they apply).
 
+This release's forum thread:
+http://forum.kerbalspaceprogram.com/threads/98943
+
 Original Forum thread:
 http://forum.kerbalspaceprogram.com/threads/69907
 

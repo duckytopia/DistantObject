@@ -1,3 +1,8 @@
+v1.4.1
+- Fix skybox max brightness not being read (Issue #1)
+
+----
+
 v1.4 (November 2, 2014) Distant Object Enhancement bis
 
 - 0.25 compatibility

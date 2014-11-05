@@ -138,7 +138,7 @@ namespace DistantObject
                     {
                         SkyboxBrightness.changeSkybox = bool.Parse(skyboxBrightness.GetValue("changeSkybox"));
                     }
-                    if (skyboxBrightness.HasValue("debrisBrightness"))
+                    if (skyboxBrightness.HasValue("maxBrightness"))
                     {
                         SkyboxBrightness.maxBrightness = float.Parse(skyboxBrightness.GetValue("maxBrightness"));
                     }

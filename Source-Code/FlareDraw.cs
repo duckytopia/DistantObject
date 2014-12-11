@@ -56,7 +56,11 @@ namespace DistantObject
             }
 
             MeshRenderer flareMR = flareMesh.GetComponentInChildren<MeshRenderer>();
-            flareMR.gameObject.layer = 10;
+            // MOARdV: valerian recommended moving vessel and body flares to
+            // layer 10, but that behaves poorly for nearby / co-orbital objects.
+            // Move vessels back to layer 0 until I can find a better place to
+            // put it.
+            //flareMR.gameObject.layer = 10;
             flareMR.material.shader = Shader.Find("KSP/Alpha/Unlit Transparent");
             flareMR.material.color = Color.white;
             flareMR.castShadows = false;

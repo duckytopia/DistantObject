@@ -1,3 +1,9 @@
+v1.4.2 (December 11, 2014)
+- Move vessel flares back to camera layer 0 to reduce their displacement as a temporary workaround for Issue #3 (MOARdV)
+- Fix flare drawing so it works with the CactEye telescope mod (Raven45)
+
+---
+
 v1.4.1
 - Fix skybox max brightness not being read (Issue #1)
 

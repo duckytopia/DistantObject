@@ -7,7 +7,7 @@ using UnityEngine;
 namespace DistantObject
 {
     [KSPAddon(KSPAddon.Startup.Flight, false)]
-    class FlareDraw : MonoBehaviour
+    public class FlareDraw : MonoBehaviour
     {
         private static Dictionary<Vessel, GameObject> vesselMeshLookup = new Dictionary<Vessel, GameObject>();
         private static Dictionary<GameObject, Vessel> meshVesselLookup = new Dictionary<GameObject, Vessel>();
@@ -24,6 +24,8 @@ namespace DistantObject
         private static float camFOV;
         private static float atmosphereFactor = 1.0f;
         private static float dimFactor = 1.0f;
+
+        private static bool ExternalControl = false;
 
         private List<string> situations = new List<string>();
 
@@ -217,7 +219,11 @@ namespace DistantObject
         private void UpdateVar()
         {
             camPos = FlightCamera.fetch.mainCamera.transform.position;
-            camFOV = FlightCamera.fetch.mainCamera.fieldOfView;
+
+            if (!ExternalControl)
+            {
+                camFOV = FlightCamera.fetch.mainCamera.fieldOfView;
+            }
 
             foreach (CelestialBody body in FlightGlobals.Bodies)
             {
@@ -505,6 +511,19 @@ namespace DistantObject
                     DrawBodyFlare(body);
                 }
             }
+        }
+
+        public static void SetFOV(float FOV)
+        {
+            if (ExternalControl)
+            {
+                camFOV = FOV;
+            }
+        }
+
+        public static void SetExternalFOVControl(bool Control)
+        {
+            ExternalControl = Control;
         }
     }
 }

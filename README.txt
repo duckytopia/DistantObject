@@ -3,8 +3,9 @@ Distant Object Enhancement bis
 
 This plugin renders effects for distant objects in Kerbal Space Program.
 
-Version 1.4.1 Release Notes:
-- Fixed bug ignoring skybox max brightness.
+Version 1.4.2 Release Notes:
+- Temporarily move vessel flares back to layer 0 to get them to render in the right place.
+- Add in fix for CactEye telescope compatibility courtesy Raven45.
 
 Original plugin by duckytopia (Rubber Ducky on the KSP forum).
 

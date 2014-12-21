@@ -27,13 +27,45 @@ namespace DistantObject
 
         private void ToggleIcon()
         {
-            if (buttonDOSettings.TexturePath == "DistantObject/Icons/toolbar_disabled")
+            if (buttonDOSettings != null)
             {
-                buttonDOSettings.TexturePath = "DistantObject/Icons/toolbar_enabled";
+                if (activated)
+                {
+                    buttonDOSettings.TexturePath = "DistantObject/Icons/toolbar_enabled";
+                }
+                else
+                {
+                    buttonDOSettings.TexturePath = "DistantObject/Icons/toolbar_disabled";
+                }
             }
-            else
+
+            if (appLauncherButton != null)
             {
-                buttonDOSettings.TexturePath = "DistantObject/Icons/toolbar_disabled";
+                if (activated)
+                {
+                    Texture2D iconTexture = null;
+                    if (GameDatabase.Instance.ExistsTexture("DistantObject/Icons/toolbar_enabled_38"))
+                    {
+                        iconTexture = GameDatabase.Instance.GetTexture("DistantObject/Icons/toolbar_enabled_38", false);
+                    }
+                    if (iconTexture != null)
+                    {
+                        appLauncherButton.SetTexture(iconTexture);
+                    }
+                }
+                else
+                {
+                    Texture2D iconTexture = null;
+                    if (GameDatabase.Instance.ExistsTexture("DistantObject/Icons/toolbar_disabled_38"))
+                    {
+                        iconTexture = GameDatabase.Instance.GetTexture("DistantObject/Icons/toolbar_disabled_38", false);
+                    }
+                    if (iconTexture != null)
+                    {
+                        appLauncherButton.SetTexture(iconTexture);
+                    }
+                }
+
             }
         }
 

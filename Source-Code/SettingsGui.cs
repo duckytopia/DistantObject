@@ -2,7 +2,6 @@ using UnityEngine;
 
 namespace DistantObject
 {
-    // MOARdV TODO: Make this usable in space center and flight
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     partial class SettingsGui : MonoBehaviour
     {
@@ -26,6 +25,12 @@ namespace DistantObject
         private bool changeSkybox = true;
         private float maxBrightness = 0.25f;
         private bool debugMode = false;
+        private bool useToolbar = true;
+        private bool useAppLauncher = true;
+
+        // MOARdV: Not sure this is the best way to go about this, but I'm
+        // not sure how else to prevent duplicate entries.
+        private static ApplicationLauncherButton appLauncherButton = null;
 
         private void ApplySettings()
         {
@@ -48,6 +53,8 @@ namespace DistantObject
             DistantObjectSettings.SkyboxBrightness.maxBrightness = maxBrightness;
 
             DistantObjectSettings.debugMode = debugMode;
+            DistantObjectSettings.useToolbar = useToolbar;
+            DistantObjectSettings.useAppLauncher = useAppLauncher;
 
             DistantObjectSettings.SaveConfig();
         }
@@ -75,19 +82,116 @@ namespace DistantObject
             maxBrightness = DistantObjectSettings.SkyboxBrightness.maxBrightness;
 
             debugMode = DistantObjectSettings.debugMode;
+            useToolbar = DistantObjectSettings.useToolbar;
+            useAppLauncher = DistantObjectSettings.useAppLauncher;
+        }
+
+        void onAppLauncherTrue()
+        {
+            if (appLauncherButton == null)
+            {
+                Debug.LogError(Constants.DistantObject + " -- onAppLauncherTrue called without a button?!?");
+                return;
+            }
+
+            activated = true;
+
+            ToggleIcon();
+        }
+
+        void onAppLauncherFalse()
+        {
+            if(appLauncherButton == null)
+            {
+                Debug.LogError(Constants.DistantObject + " -- onAppLauncherFalse called without a button?!?");
+                return;
+            }
+
+            activated = false;
+            ToggleIcon();
+        }
+
+        void RemoveFromAppLauncher()
+        {
+            if (appLauncherButton != null)
+            {
+                ApplicationLauncher.Instance.RemoveApplication(appLauncherButton);
+                appLauncherButton = null;
+                GameEvents.onGUIApplicationLauncherReady.Remove(onGUIAppLauncherReady);
+                GameEvents.onGUIApplicationLauncherReady.Remove(onGuiAppLauncherDestroyed);
+                GameEvents.onGameSceneLoadRequested.Remove(onGameSceneLoadRequestedForAppLauncher);
+            }
+        }
+
+        void onGUIAppLauncherReady()
+        {
+            if (ApplicationLauncher.Ready && appLauncherButton == null)
+            {
+                Texture2D iconTexture = null;
+                if (GameDatabase.Instance.ExistsTexture("DistantObject/Icons/toolbar_disabled_38"))
+                {
+                    iconTexture = GameDatabase.Instance.GetTexture("DistantObject/Icons/toolbar_disabled_38", false);
+                }
+
+                if (iconTexture == null)
+                {
+                    Debug.LogError(Constants.DistantObject + " -- Failed to load toolbar_disabled_38");
+                }
+                else
+                {
+                    appLauncherButton = ApplicationLauncher.Instance.AddModApplication(onAppLauncherTrue, onAppLauncherFalse,
+                        null, null, null, null,
+                        ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPACECENTER,
+                        iconTexture);
+                    if (appLauncherButton == null)
+                    {
+                        Debug.LogError(Constants.DistantObject + " -- Unable to create AppLauncher button");
+                    }
+                }
+            }
+        }
+
+        void onGuiAppLauncherDestroyed()
+        {
+            if(appLauncherButton != null)
+            {
+                RemoveFromAppLauncher();
+            }
+        }
+
+        void onGameSceneLoadRequestedForAppLauncher(GameScenes SceneToLoad)
+        {
+            if (appLauncherButton != null)
+            {
+                RemoveFromAppLauncher();
+            }
         }
 
         public void Awake()
         {
+            //Load settings
+            ReadSettings();
+            
+            if (appLauncherButton == null && useAppLauncher)
+            {
+                GameEvents.onGUIApplicationLauncherReady.Add(onGUIAppLauncherReady);
+                GameEvents.onGUIApplicationLauncherDestroyed.Add(onGuiAppLauncherDestroyed);
+                GameEvents.onGameSceneLoadRequested.Remove(onGameSceneLoadRequestedForAppLauncher);
+            }
+
             // Load and configure once
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
-                print(Constants.DistantObject + " -- SettingsGUI initialized");
-                foreach (AssemblyLoader.LoadedAssembly assembly in AssemblyLoader.loadedAssemblies)
+                //print(Constants.DistantObject + " -- SettingsGUI initialized");
+
+                if (useToolbar)
                 {
-                    if (assembly.name == "Toolbar")
+                    foreach (AssemblyLoader.LoadedAssembly assembly in AssemblyLoader.loadedAssemblies)
                     {
-                        toolbarInstalled = true;
+                        if (assembly.name == "Toolbar")
+                        {
+                            toolbarInstalled = true;
+                        }
                     }
                 }
                 if (toolbarInstalled)
@@ -96,9 +200,6 @@ namespace DistantObject
                 }
 
                 RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));
-
-                //Load settings
-                ReadSettings();
             }
         }
 
@@ -242,6 +343,16 @@ namespace DistantObject
             GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
             debugMode = GUILayout.Toggle(debugMode, "Debug Mode");
             GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
+            useAppLauncher = GUILayout.Toggle(useAppLauncher, "Use KSP AppLauncher (requires restart)");
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
+            useToolbar = GUILayout.Toggle(useToolbar, "Use Blizzy's Toolbar (requires restart)");
+            GUILayout.EndHorizontal();
+            if(useAppLauncher == false && useToolbar == false)
+            {
+                useAppLauncher = true;
+            }
 
             GUILayout.BeginHorizontal(GUILayout.ExpandHeight(false));
             if (GUILayout.Button("Reset To Default"))
@@ -298,6 +409,8 @@ namespace DistantObject
             maxBrightness = 0.25f;
 
             debugMode = false;
+            useToolbar = true;
+            useAppLauncher = true;
         }
 
         public static void Toggle()

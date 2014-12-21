@@ -54,6 +54,8 @@ namespace DistantObject
         }
 
         static public bool debugMode = false;
+        static public bool useToolbar = true;
+        static public bool useAppLauncher = true;
 
         //--- Internal values
         static private bool hasLoaded = false;
@@ -105,6 +107,14 @@ namespace DistantObject
                     if (distantFlare.HasValue("debugMode"))
                     {
                         debugMode = bool.Parse(distantFlare.GetValue("debugMode"));
+                    }
+                    if (distantFlare.HasValue("useToolbar"))
+                    {
+                        useToolbar = bool.Parse(distantFlare.GetValue("useToolbar"));
+                    }
+                    if (distantFlare.HasValue("useAppLauncher"))
+                    {
+                        useAppLauncher = bool.Parse(distantFlare.GetValue("useAppLauncher"));
                     }
                 }
 
@@ -162,6 +172,8 @@ namespace DistantObject
             distantFlare.AddValue("situations", DistantFlare.situations);
             distantFlare.AddValue("showNames", DistantFlare.showNames);
             distantFlare.AddValue("debugMode", debugMode);
+            distantFlare.AddValue("useToolbar", useToolbar);
+            distantFlare.AddValue("useAppLauncher", useAppLauncher);
 
             ConfigNode distantVessel = settings.AddNode("DistantVessel");
             distantVessel.AddValue("renderVessels", DistantVessel.renderVessels);

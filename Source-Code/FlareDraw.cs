@@ -197,7 +197,7 @@ namespace DistantObject
             MeshRenderer flareMR = meshRendererLookup[flareMesh];
             Color color = flareMR.material.color;
 
-            if (targetSize < (camFOV / 500) && !inShadow && isVisible)
+            if (targetSize < (camFOV / 500) && !inShadow && isVisible && !MapView.MapIsEnabled)
             {
                 color.a = atmosphereFactor * dimFactor;
                 if (targetSize > (camFOV / 1000))

@@ -1,3 +1,9 @@
+v1.5.0 (December 21, 2014)
+- Disable flare rendering in MapView, since flare positions are completely wrong.
+- Add support for stock KSP Toolbar (AppLauncher).
+
+---
+
 v1.4.2 (December 11, 2014)
 - Move vessel flares back to camera layer 0 to reduce their displacement as a temporary workaround for Issue #3 (MOARdV)
 - Fix flare drawing so it works with the CactEye telescope mod (Raven45)

@@ -43,9 +43,6 @@
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\..\Games\Steam\steamapps\common\Kerbal Space Program\KSP_Data\Managed\Assembly-CSharp-firstpass.dll</HintPath>
     </Reference>
-    <Reference Include="Toolbar">
-      <HintPath>..\..\..\..\Games\Steam\steamapps\common\Kerbal Space Program\GameData\000_Toolbar\Toolbar.dll</HintPath>
-    </Reference>
     <Reference Include="UnityEngine">
       <HintPath>..\..\..\..\Games\Steam\steamapps\common\Kerbal Space Program\KSP_Data\Managed\UnityEngine.dll</HintPath>
     </Reference>
@@ -56,6 +53,7 @@
     <Compile Include="Source-Code\FlareDraw.cs" />
     <Compile Include="Source-Code\SettingsGui.cs" />
     <Compile Include="Source-Code\ToolbarDOE.cs" />
+    <Compile Include="Source-Code\ToolbarWrapper.cs" />
     <Compile Include="Source-Code\Utils.cs" />
     <Compile Include="Source-Code\VesselDraw.cs" />
   </ItemGroup>

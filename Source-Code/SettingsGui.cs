@@ -7,7 +7,6 @@ namespace DistantObject
     {
         protected Rect windowPos = new Rect(Screen.width / 4, Screen.height / 4, 10f, 10f);
 
-        private bool toolbarInstalled = false;
         private static bool activated = false;
         private bool isActivated = false;
 
@@ -83,7 +82,7 @@ namespace DistantObject
 
             debugMode = DistantObjectSettings.debugMode;
             useToolbar = DistantObjectSettings.useToolbar;
-            useAppLauncher = DistantObjectSettings.useAppLauncher;
+            useAppLauncher = DistantObjectSettings.useAppLauncher || !ToolbarManager.ToolbarAvailable;
         }
 
         void onAppLauncherTrue()
@@ -184,17 +183,7 @@ namespace DistantObject
             {
                 //print(Constants.DistantObject + " -- SettingsGUI initialized");
 
-                if (useToolbar)
-                {
-                    foreach (AssemblyLoader.LoadedAssembly assembly in AssemblyLoader.loadedAssemblies)
-                    {
-                        if (assembly.name == "Toolbar")
-                        {
-                            toolbarInstalled = true;
-                        }
-                    }
-                }
-                if (toolbarInstalled)
+                if (useToolbar && ToolbarManager.ToolbarAvailable)
                 {
                     toolbarButton();
                 }

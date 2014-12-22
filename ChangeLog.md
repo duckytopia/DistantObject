@@ -1,3 +1,8 @@
+v1.5.1 (December 21, 2014)
+- Removed requirement for blizzy's Toolbar being installed.
+
+---
+
 v1.5.0 (December 21, 2014)
 - Disable flare rendering in MapView, since flare positions are completely wrong.
 - Add support for stock KSP Toolbar (AppLauncher).

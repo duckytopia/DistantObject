@@ -26,6 +26,9 @@ http://forum.kerbalspaceprogram.com/threads/69907
 Source Code:
 https://github.com/MOARdV/DistantObject
 
+Documentation:
+https://github.com/MOARdV/DistantObject/wiki
+
 License:
 
 Creative Commons Attribution 4.0 International

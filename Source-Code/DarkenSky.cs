@@ -3,9 +3,8 @@ using UnityEngine;
 
 namespace DistantObject
 {
-    // MOARdV TODO: Why was this EveryScene?
-    [KSPAddon(KSPAddon.Startup.Flight, false)]
-    //[KSPAddon(KSPAddon.Startup.EveryScene, false)]
+    //Peachoftree: It was EveryScene so the sky would darken in places like the starting menu and the tracking center, not just flight and map veiw 
+    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     class DarkenSky : MonoBehaviour
     {
         private Color maxColor = Color.black;

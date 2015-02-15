@@ -3,10 +3,9 @@ Distant Object Enhancement bis
 
 This plugin renders effects for distant objects in Kerbal Space Program.
 
-Version 1.5.1 Release Notes:
-- Disabled flare rendering in MapView entirely (they're completely wrong).
-- Add support for stock KSP toolbar (AppLauncher).
-- Remove requirement for blizzy's Toolbar plugin.
+Version 1.5.2 Release Notes:
+- Fixed flares rendering when their world is rendered (eg, Minmus and its flare rendering at the same time).
+- Internal reorganization of the flare management code to make it less costly to execute, and easier to change.
 
 Original plugin by duckytopia (Rubber Ducky on the KSP forum).
 

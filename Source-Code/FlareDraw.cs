@@ -105,6 +105,8 @@ namespace DistantObject
         private Transform showNameTransform = null;
         private Color showNameColor;
 
+        private List<Transform> scaledTransforms = new List<Transform>();
+
         //--------------------------------------------------------------------
         // AddVesselFlare
         // Add a new vessel flare to our library
@@ -498,6 +500,13 @@ namespace DistantObject
             // Remove Vessels from our dictionaries just before they are destroyed.
             // After they are destroyed they are == null and this confuses Dictionary.
             GameEvents.onVesselWillDestroy.Add(RemoveVesselFlare);
+
+            // Cache a list of the scaledTransforms so we know which worlds
+            // are being rendered.
+            scaledTransforms =
+                ScaledSpace.Instance.scaledSpaceTransforms
+                .Where(ss => ss.GetComponent<ScaledSpaceFader>() != null)
+                .ToList();
         }
 
         //--------------------------------------------------------------------
@@ -533,6 +542,18 @@ namespace DistantObject
                 {
                     flare.Update(camPos, camFOV);
                     CheckDraw(flare.bodyMesh, flare.meshRenderer, flare.body.transform.position, flare.body.referenceBody, flare.bodySize, FlareType.Celestial);
+
+                    try
+                    {
+                        Renderer scaledRenderer = scaledTransforms.Find(x => x.name == flare.body.name).renderer;
+
+                        flare.bodyMesh.SetActive(!(scaledRenderer.enabled && scaledRenderer.isVisible));
+                    }
+                    catch(Exception e)
+                    {
+                        flare.bodyMesh.SetActive(true);
+                        Debug.LogException(e);
+                    }
                 }
 
                 UpdateVar();

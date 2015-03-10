@@ -391,9 +391,9 @@ namespace DistantObject
         // Update the mousever name (if applicable)
         private void UpdateNameShown()
         {
+            showNameTransform = null;
             if (DistantObjectSettings.DistantFlare.showNames && !MapView.MapIsEnabled)
             {
-                showNameTransform = null;
                 Ray mouseRay = FlightCamera.fetch.mainCamera.ScreenPointToRay(Input.mousePosition);
 
                 // Detect CelestialBody mouseovers

@@ -84,9 +84,11 @@ namespace DistantObject
                     cloneMesh.transform.SetParent(shipToDraw.transform);
                     cloneMesh.transform.localPosition = a.position;
                     cloneMesh.transform.localRotation = a.rotation;
-                    if (Vector3d.Distance(cloneMesh.transform.position, FlightGlobals.ship_position) < Vessel.loadDistance)
+                    
+                    VesselRanges.Situation situation = shipToDraw.vesselRanges.GetSituationRanges(shipToDraw.situation);
+                    if (Vector3d.Distance(cloneMesh.transform.position, FlightGlobals.ship_position) < situation.load)
                     {
-                        print("DistObj ERROR: Tried to draw part " + partName + " within rendering distance of active vessel!");
+                        Debug.LogError(Constants.DistantObject + " -- Tried to draw part " + partName + " within rendering distance of active vessel!");
                         continue;
                     }
                     cloneMesh.SetActive(true);
@@ -312,11 +314,14 @@ namespace DistantObject
                 {
                     string url = urlConfig.parent.url.Substring(0, urlConfig.parent.url.LastIndexOf("/"));
                     string model = System.IO.Path.GetFileNameWithoutExtension(cfgNode.GetValue("mesh"));
-                    partModelNameLookup.Add(urlConfig.name, url + "/" + model);
+                    if(!partModelNameLookup.ContainsKey(urlConfig.name))
+                    {
+                        partModelNameLookup.Add(urlConfig.name, url + "/" + model);
+                    }
                 }
                 else
                 {
-                    print("DistObj ERROR: Could not find ConfigNode for part " + urlConfig.name);
+                    Debug.LogError(Constants.DistantObject + " -- Could not find ConfigNode for part " + urlConfig.name);
                 }
             }
 

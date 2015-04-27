@@ -334,7 +334,7 @@ namespace DistantObject
             if (FlightGlobals.currentMainBody != null && FlightGlobals.currentMainBody.atmosphere)
             {
                 double camAltitude = FlightGlobals.currentMainBody.GetAltitude(camPos);
-                double atmAltitude = FlightGlobals.currentMainBody.maxAtmosphereAltitude;
+                double atmAltitude = FlightGlobals.currentMainBody.atmosphereDepth;
                 double atmCurrentBrightness = (Vector3d.Distance(camPos, FlightGlobals.Bodies[0].position) - Vector3d.Distance(FlightGlobals.currentMainBody.position, FlightGlobals.Bodies[0].position)) / (FlightGlobals.currentMainBody.Radius);
 
                 if (camAltitude > (atmAltitude / 2.0) || atmCurrentBrightness > 0.15)
@@ -360,8 +360,10 @@ namespace DistantObject
                         atmosphereFactor = 1.0f;
                     }
                 }
-                float atmThickness = (float)Math.Min(Math.Sqrt(FlightGlobals.currentMainBody.atmosphereMultiplier), 1);
-                atmosphereFactor = (atmThickness)*(atmosphereFactor) + (1 - atmThickness);
+                // atmDensityASL isn't an exact match for atmosphereMultiplier from KSP 0.90, I think, but it
+                // provides a '1' for Kerbin (1.2, actually)
+                float atmThickness = (float)Math.Min(Math.Sqrt(FlightGlobals.currentMainBody.atmDensityASL), 1);
+                atmosphereFactor = (atmThickness) * (atmosphereFactor) + (1 - atmThickness);
             }
 
             dimFactor = Mathf.Min(1.0f, GalaxyCubeControl.Instance.maxGalaxyColor.r / DistantObjectSettings.SkyboxBrightness.maxBrightness);

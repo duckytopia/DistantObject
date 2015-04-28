@@ -1,3 +1,8 @@
+v1.5.3 (April 27, 2015)
+- KSP 1.0 compatibility release
+
+---
+
 v1.5.2 (February 15, 2015)
 - Fixed flares rendering when their world is rendered (eg, Minmus and its flare rendering at the same time).
 - Internal reorganization of the flare management code to make it less costly to execute, and easier to change.

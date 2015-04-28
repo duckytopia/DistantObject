@@ -3,9 +3,8 @@ Distant Object Enhancement bis
 
 This plugin renders effects for distant objects in Kerbal Space Program.
 
-Version 1.5.2 Release Notes:
-- Fixed flares rendering when their world is rendered (eg, Minmus and its flare rendering at the same time).
-- Internal reorganization of the flare management code to make it less costly to execute, and easier to change.
+Version 1.5.3 Release Notes:
+- KSP 1.0 compatibility update.
 
 Original plugin by duckytopia (Rubber Ducky on the KSP forum).
 

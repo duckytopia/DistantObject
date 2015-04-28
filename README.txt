@@ -15,6 +15,8 @@ Known Issues:
 
 - Some settings changed during flight do not take effect immediately (must go back to the space center before they apply).
 
+- Some ghost flares appear during flight (flares that shouldn't be there).
+
 This release's forum thread:
 http://forum.kerbalspaceprogram.com/threads/98943
 

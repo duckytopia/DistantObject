@@ -70,6 +70,8 @@ namespace DistantObject
 
         private void OnDestroy()
         {
+            GameEvents.onGameSceneLoadRequested.Remove(onGameSceneLoadRequestedForAppLauncher);
+            
             if (buttonDOSettings != null)
             {
                 buttonDOSettings.Destroy();

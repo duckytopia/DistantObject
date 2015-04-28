@@ -27,9 +27,7 @@ namespace DistantObject
         private bool useToolbar = true;
         private bool useAppLauncher = true;
 
-        // MOARdV: Not sure this is the best way to go about this, but I'm
-        // not sure how else to prevent duplicate entries.
-        private static ApplicationLauncherButton appLauncherButton = null;
+        private ApplicationLauncherButton appLauncherButton = null;
 
         private void ApplySettings()
         {
@@ -112,57 +110,61 @@ namespace DistantObject
 
         void RemoveFromAppLauncher()
         {
+            if (DistantObjectSettings.debugMode)
+            {
+                Debug.Log(Constants.DistantObject + " -- RemoveFromAppLauncher");
+            }
             if (appLauncherButton != null)
             {
                 ApplicationLauncher.Instance.RemoveApplication(appLauncherButton);
                 appLauncherButton = null;
-                GameEvents.onGUIApplicationLauncherReady.Remove(onGUIAppLauncherReady);
-                GameEvents.onGUIApplicationLauncherReady.Remove(onGuiAppLauncherDestroyed);
                 GameEvents.onGameSceneLoadRequested.Remove(onGameSceneLoadRequestedForAppLauncher);
             }
         }
 
-        void onGUIAppLauncherReady()
+        ApplicationLauncherButton InitAppLauncherButton()
         {
-            if (ApplicationLauncher.Ready && appLauncherButton == null)
+            ApplicationLauncherButton button = null;
+            Texture2D iconTexture = null;
+            if (DistantObjectSettings.debugMode)
             {
-                Texture2D iconTexture = null;
-                if (GameDatabase.Instance.ExistsTexture("DistantObject/Icons/toolbar_disabled_38"))
-                {
-                    iconTexture = GameDatabase.Instance.GetTexture("DistantObject/Icons/toolbar_disabled_38", false);
-                }
+                Debug.Log(Constants.DistantObject + " -- InitAppLauncherButton");
+            }
+            if (GameDatabase.Instance.ExistsTexture("DistantObject/Icons/toolbar_disabled_38"))
+            {
+                iconTexture = GameDatabase.Instance.GetTexture("DistantObject/Icons/toolbar_disabled_38", false);
+            }
 
-                if (iconTexture == null)
+            if (iconTexture == null)
+            {
+                Debug.LogError(Constants.DistantObject + " -- Failed to load toolbar_disabled_38");
+            }
+            else
+            {
+                button = ApplicationLauncher.Instance.AddModApplication(onAppLauncherTrue, onAppLauncherFalse,
+                    null, null, null, null,
+                    ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPACECENTER,
+                    iconTexture);
+                if (button == null)
                 {
-                    Debug.LogError(Constants.DistantObject + " -- Failed to load toolbar_disabled_38");
-                }
-                else
-                {
-                    appLauncherButton = ApplicationLauncher.Instance.AddModApplication(onAppLauncherTrue, onAppLauncherFalse,
-                        null, null, null, null,
-                        ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPACECENTER,
-                        iconTexture);
-                    if (appLauncherButton == null)
-                    {
-                        Debug.LogError(Constants.DistantObject + " -- Unable to create AppLauncher button");
-                    }
+                    Debug.LogError(Constants.DistantObject + " -- Unable to create AppLauncher button");
                 }
             }
-        }
 
-        void onGuiAppLauncherDestroyed()
-        {
-            if(appLauncherButton != null)
-            {
-                RemoveFromAppLauncher();
-            }
+            return button;
         }
 
         void onGameSceneLoadRequestedForAppLauncher(GameScenes SceneToLoad)
         {
+            if (DistantObjectSettings.debugMode)
+            {
+                Debug.Log(Constants.DistantObject + " -- onGameSceneLoadRequestedForAppLauncher: " + SceneToLoad.ToString() + " - " + this.GetInstanceID() + " AppLauncher.Ready = " + ApplicationLauncher.Ready.ToString());
+            }
             if (appLauncherButton != null)
             {
-                RemoveFromAppLauncher();
+                ApplicationLauncher.Instance.RemoveModApplication(appLauncherButton);
+                appLauncherButton = null;
+                GameEvents.onGameSceneLoadRequested.Remove(onGameSceneLoadRequestedForAppLauncher);
             }
         }
 
@@ -170,18 +172,20 @@ namespace DistantObject
         {
             //Load settings
             ReadSettings();
-            
-            if (appLauncherButton == null && useAppLauncher)
+
+            if (DistantObjectSettings.debugMode)
             {
-                GameEvents.onGUIApplicationLauncherReady.Add(onGUIAppLauncherReady);
-                GameEvents.onGUIApplicationLauncherDestroyed.Add(onGuiAppLauncherDestroyed);
-                GameEvents.onGameSceneLoadRequested.Remove(onGameSceneLoadRequestedForAppLauncher);
+                Debug.Log(Constants.DistantObject + " -- awake - " + this.GetInstanceID());
             }
 
             // Load and configure once
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
-                //print(Constants.DistantObject + " -- SettingsGUI initialized");
+                if (useAppLauncher && ApplicationLauncher.Ready)
+                {
+                    appLauncherButton = InitAppLauncherButton();
+                    GameEvents.onGameSceneLoadRequested.Add(onGameSceneLoadRequestedForAppLauncher);
+                }
 
                 if (useToolbar && ToolbarManager.ToolbarAvailable)
                 {

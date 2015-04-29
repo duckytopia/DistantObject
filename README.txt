@@ -1,10 +1,10 @@
 Distant Object Enhancement bis
 =============
 
-This plugin renders effects for distant objects in Kerbal Space Program.
+This plugin renders effects for distant objects in Kerbal Space Program v1.0.
 
-Version 1.5.3 Release Notes:
-- KSP 1.0 compatibility update.
+Version 1.5.4 Release Notes:
+- Fix the App Launcher extra button.
 
 Original plugin by duckytopia (Rubber Ducky on the KSP forum).
 

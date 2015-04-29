@@ -27,7 +27,7 @@ namespace DistantObject
         private bool useToolbar = true;
         private bool useAppLauncher = true;
 
-        private ApplicationLauncherButton appLauncherButton = null;
+        private static ApplicationLauncherButton appLauncherButton = null;
 
         private void ApplySettings()
         {
@@ -160,12 +160,6 @@ namespace DistantObject
             {
                 Debug.Log(Constants.DistantObject + " -- onGameSceneLoadRequestedForAppLauncher: " + SceneToLoad.ToString() + " - " + this.GetInstanceID() + " AppLauncher.Ready = " + ApplicationLauncher.Ready.ToString());
             }
-            if (appLauncherButton != null)
-            {
-                ApplicationLauncher.Instance.RemoveModApplication(appLauncherButton);
-                appLauncherButton = null;
-                GameEvents.onGameSceneLoadRequested.Remove(onGameSceneLoadRequestedForAppLauncher);
-            }
         }
 
         public void Awake()
@@ -181,7 +175,7 @@ namespace DistantObject
             // Load and configure once
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
-                if (useAppLauncher && ApplicationLauncher.Ready)
+                if (useAppLauncher && appLauncherButton == null && ApplicationLauncher.Ready)
                 {
                     appLauncherButton = InitAppLauncherButton();
                     GameEvents.onGameSceneLoadRequested.Add(onGameSceneLoadRequestedForAppLauncher);

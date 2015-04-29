@@ -1,3 +1,8 @@
+v1.5.4 (April 29, 2015)
+- Fix the App Launcher extra icon bug (Issue #12)
+
+---
+
 v1.5.3 (April 27, 2015)
 - KSP 1.0 compatibility release
 

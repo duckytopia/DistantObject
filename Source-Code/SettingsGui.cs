@@ -26,6 +26,7 @@ namespace DistantObject
         private bool debugMode = false;
         private bool useToolbar = true;
         private bool useAppLauncher = true;
+	    private bool onlyInSpaceCenter = true;
 
         private static ApplicationLauncherButton appLauncherButton = null;
 
@@ -51,7 +52,8 @@ namespace DistantObject
 
             DistantObjectSettings.debugMode = debugMode;
             DistantObjectSettings.useToolbar = useToolbar;
-            DistantObjectSettings.useAppLauncher = useAppLauncher;
+			DistantObjectSettings.useAppLauncher = useAppLauncher;
+			DistantObjectSettings.onlyInSpaceCenter = onlyInSpaceCenter;
 
             DistantObjectSettings.SaveConfig();
         }
@@ -81,6 +83,7 @@ namespace DistantObject
             debugMode = DistantObjectSettings.debugMode;
             useToolbar = DistantObjectSettings.useToolbar;
             useAppLauncher = DistantObjectSettings.useAppLauncher || !ToolbarManager.ToolbarAvailable;
+	        onlyInSpaceCenter = DistantObjectSettings.onlyInSpaceCenter;
         }
 
         void onAppLauncherTrue()
@@ -141,10 +144,15 @@ namespace DistantObject
             }
             else
             {
-                button = ApplicationLauncher.Instance.AddModApplication(onAppLauncherTrue, onAppLauncherFalse,
-                    null, null, null, null,
-                    ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPACECENTER,
-                    iconTexture);
+	            var scenes = onlyInSpaceCenter
+		            ? ApplicationLauncher.AppScenes.SPACECENTER
+		            : ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPACECENTER;
+
+	            button = ApplicationLauncher.Instance.AddModApplication(onAppLauncherTrue, onAppLauncherFalse,
+					null, null, null, null,
+					scenes,
+					iconTexture);
+
                 if (button == null)
                 {
                     Debug.LogError(Constants.DistantObject + " -- Unable to create AppLauncher button");
@@ -175,8 +183,16 @@ namespace DistantObject
             // Load and configure once
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
+
+	            if (onlyInSpaceCenter && HighLogic.LoadedSceneIsFlight)
+	            {
+		            ApplicationLauncher.Instance.RemoveModApplication(appLauncherButton);
+		            appLauncherButton = null;
+	            }
+
                 if (useAppLauncher && appLauncherButton == null && ApplicationLauncher.Ready)
                 {
+					Debug.Log(Constants.DistantObject + " -- creating new instance - " + this.GetInstanceID());
                     appLauncherButton = InitAppLauncherButton();
                     GameEvents.onGameSceneLoadRequested.Add(onGameSceneLoadRequestedForAppLauncher);
                 }
@@ -184,7 +200,7 @@ namespace DistantObject
                 if (useToolbar && ToolbarManager.ToolbarAvailable)
                 {
                     toolbarButton();
-                }
+				}
 
                 RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));
             }
@@ -335,11 +351,14 @@ namespace DistantObject
             GUILayout.EndHorizontal();
             GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
             useToolbar = GUILayout.Toggle(useToolbar, "Use Blizzy's Toolbar (requires restart)");
-            GUILayout.EndHorizontal();
-            if(useAppLauncher == false && useToolbar == false)
-            {
-                useAppLauncher = true;
-            }
+			GUILayout.EndHorizontal();
+			if (useAppLauncher == false && useToolbar == false)
+			{
+				useAppLauncher = true;
+			}
+			GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
+			onlyInSpaceCenter = GUILayout.Toggle(onlyInSpaceCenter, "Show only in Space Center (requires restart)");
+			GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal(GUILayout.ExpandHeight(false));
             if (GUILayout.Button("Reset To Default"))
@@ -398,6 +417,7 @@ namespace DistantObject
             debugMode = false;
             useToolbar = true;
             useAppLauncher = true;
+	        onlyInSpaceCenter = true;
         }
 
         public static void Toggle()

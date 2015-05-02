@@ -56,7 +56,7 @@ namespace DistantObject
 
         public void Update(Vector3d camPos, float camFOV)
         {
-            double targetDist = Vector3d.Distance(flareMesh.transform.position, camPos);
+            double targetDist = Vector3d.Distance(referenceShip.transform.position, camPos);
             if (targetDist > 750000.0 && flareMesh.activeSelf)
             {
                 flareMesh.SetActive(false);

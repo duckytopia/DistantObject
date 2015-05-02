@@ -56,6 +56,7 @@ namespace DistantObject
         static public bool debugMode = false;
         static public bool useToolbar = true;
         static public bool useAppLauncher = true;
+	    public static bool onlyInSpaceCenter = true;
 
         //--- Internal values
         static private bool hasLoaded = false;
@@ -115,7 +116,11 @@ namespace DistantObject
                     if (distantFlare.HasValue("useAppLauncher"))
                     {
                         useAppLauncher = bool.Parse(distantFlare.GetValue("useAppLauncher"));
-                    }
+					}
+					if (distantFlare.HasValue("onlyInSpaceCenter"))
+					{
+						onlyInSpaceCenter = bool.Parse(distantFlare.GetValue("onlyInSpaceCenter"));
+					}
                 }
 
                 if (settings.HasNode("DistantVessel"))
@@ -173,7 +178,8 @@ namespace DistantObject
             distantFlare.AddValue("showNames", DistantFlare.showNames);
             distantFlare.AddValue("debugMode", debugMode);
             distantFlare.AddValue("useToolbar", useToolbar);
-            distantFlare.AddValue("useAppLauncher", useAppLauncher);
+			distantFlare.AddValue("useAppLauncher", useAppLauncher);
+			distantFlare.AddValue("onlyInSpaceCenter", onlyInSpaceCenter);
 
             ConfigNode distantVessel = settings.AddNode("DistantVessel");
             distantVessel.AddValue("renderVessels", DistantVessel.renderVessels);

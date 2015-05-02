@@ -144,14 +144,10 @@ namespace DistantObject
             }
             else
             {
-	            var scenes = onlyInSpaceCenter
-		            ? ApplicationLauncher.AppScenes.SPACECENTER
-		            : ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPACECENTER;
-
 	            button = ApplicationLauncher.Instance.AddModApplication(onAppLauncherTrue, onAppLauncherFalse,
 					null, null, null, null,
-					scenes,
-					iconTexture);
+					ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPACECENTER,
+					 iconTexture);
 
                 if (button == null)
                 {
@@ -184,18 +180,23 @@ namespace DistantObject
             if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
 
-	            if (onlyInSpaceCenter && HighLogic.LoadedSceneIsFlight)
-	            {
-		            ApplicationLauncher.Instance.RemoveModApplication(appLauncherButton);
-		            appLauncherButton = null;
-	            }
-
                 if (useAppLauncher && appLauncherButton == null && ApplicationLauncher.Ready)
                 {
 					Debug.Log(Constants.DistantObject + " -- creating new instance - " + this.GetInstanceID());
                     appLauncherButton = InitAppLauncherButton();
                     GameEvents.onGameSceneLoadRequested.Add(onGameSceneLoadRequestedForAppLauncher);
                 }
+
+
+	            if (useAppLauncher && appLauncherButton != null)
+	            {
+					if (onlyInSpaceCenter)
+						appLauncherButton.VisibleInScenes = ApplicationLauncher.AppScenes.SPACECENTER;
+					else
+						appLauncherButton.VisibleInScenes = ApplicationLauncher.AppScenes.SPACECENTER |
+															ApplicationLauncher.AppScenes.FLIGHT;
+	            }
+
 
                 if (useToolbar && ToolbarManager.ToolbarAvailable)
                 {

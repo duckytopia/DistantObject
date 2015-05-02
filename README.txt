@@ -7,6 +7,7 @@ Version 1.5.5 Release Notes:
 - Option to show config button only in Space Center view (Gribbleshnibit8View).
 - Labels for worlds that are not visible (such as blocked by a nearby world) no longer show up.
 - Some assorted tweaks in an effort to deal with a couple of other bugs.
+- Ghost flares should be fixed.
 
 Original plugin by duckytopia (Rubber Ducky on the KSP forum).
 
@@ -14,8 +15,6 @@ Distant Object Enhancement bis update by MOARdV.
 
 Known Issues:
 - Some settings changed during flight do not take effect immediately (must go back to the space center before they apply).
-
-- Some ghost flares appear during flight (flares that shouldn't be there).
 
 This release's forum thread:
 http://forum.kerbalspaceprogram.com/threads/98943

@@ -3,8 +3,8 @@ Distant Object Enhancement bis
 
 This plugin renders effects for distant objects in Kerbal Space Program v1.0.
 
-Version 1.5.4 Release Notes:
-- Fix the App Launcher extra button.
+Version 1.5.5 Release Notes:
+- Option to show config button only in Space Center view (Gribbleshnibit8View).
 
 Original plugin by duckytopia (Rubber Ducky on the KSP forum).
 

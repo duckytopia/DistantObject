@@ -106,6 +106,7 @@ namespace DistantObject
         private Color showNameColor;
 
         private List<Transform> scaledTransforms = new List<Transform>();
+        private List<Vessel> deadVessels = new List<Vessel>();
 
         //--------------------------------------------------------------------
         // AddVesselFlare
@@ -191,7 +192,14 @@ namespace DistantObject
                     flareMesh.SetActive(true);
 
                     MeshRenderer flareMR = flareMesh.GetComponentInChildren<MeshRenderer>();
-                    flareMR.gameObject.layer = 10;
+                    // With KSP 1.0, putting these on layer 10 introduces 
+                    // ghost flares that render for a while before fading away.
+                    // These flares were moved to 10 because of an
+                    // interaction with PlanetShine.  However, I don't see
+                    // that problem any longer (where flares changed brightness
+                    // during sunrise / sunset).
+                    flareMR.gameObject.layer = 0;
+                    //flareMR.gameObject.layer = 10;
                     flareMR.material.shader = Shader.Find("KSP/Alpha/Unlit Transparent");
                     Color color = Color.white;
                     if (bodyColors.ContainsKey(body))
@@ -221,7 +229,6 @@ namespace DistantObject
         {
             // See if there are vessels that need to be removed from our live
             // list
-            List<Vessel> deadVessels = new List<Vessel>();
             foreach (Vessel v in vesselFlares.Keys)
             {
                 if (v.loaded == true || !situations.Contains(v.situation))
@@ -234,6 +241,7 @@ namespace DistantObject
             {
                 RemoveVesselFlare(v);
             }
+            deadVessels.Clear();
 
             // See which vessels we should add
             foreach (Vessel vessel in FlightGlobals.Vessels)
@@ -544,6 +552,10 @@ namespace DistantObject
                     camFOV = FlightCamera.fetch.mainCamera.fieldOfView;
                 }
 
+                if (DistantObjectSettings.debugMode)
+                {
+                    Debug.Log(Constants.DistantObject + " -- Update");
+                }
                 foreach (BodyFlare flare in bodyFlares)
                 {
                     flare.Update(camPos, camFOV);

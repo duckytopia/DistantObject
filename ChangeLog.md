@@ -1,3 +1,10 @@
+v1.5.5 (May 2, 2015)
+- Option to show config button only in Space Center view (Gribbleshnibit8View).
+- Labels for worlds that are not visible (such as blocked by a nearby world) no longer show up.
+- Some assorted tweaks in an effort to deal with a couple of other bugs.
+
+---
+
 v1.5.4 (April 29, 2015)
 - Fix the App Launcher extra icon bug (Issue #12)
 

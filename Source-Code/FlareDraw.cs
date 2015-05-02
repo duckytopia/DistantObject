@@ -502,7 +502,7 @@ namespace DistantObject
 
             if (DistantObjectSettings.DistantFlare.flaresEnabled)
             {
-                Debug.Log(Constants.DistantObject + " -- FlareDraw initialized");
+                Debug.Log(Constants.DistantObject + " -- FlareDraw enabled");
             }
             else
             {
@@ -543,9 +543,9 @@ namespace DistantObject
         // Update flare positions and visibility
         private void Update()
         {
+            showNameTransform = null;
             if (DistantObjectSettings.DistantFlare.flaresEnabled)
             {
-                showNameTransform = null;
                 if (MapView.MapIsEnabled)
                 {
                     // Big Hammer for map view - don't draw any flares
@@ -577,16 +577,23 @@ namespace DistantObject
                         flare.Update(camPos, camFOV);
                         CheckDraw(flare.bodyMesh, flare.meshRenderer, flare.body.transform.position, flare.body.referenceBody, flare.bodySize, FlareType.Celestial);
 
-                        try
+                        if (flare.meshRenderer.material.color.a > 0.0f)
                         {
-                            Renderer scaledRenderer = scaledTransforms.Find(x => x.name == flare.body.name).renderer;
+                            try
+                            {
+                                Renderer scaledRenderer = scaledTransforms.Find(x => x.name == flare.body.name).renderer;
 
-                            flare.bodyMesh.SetActive(!(scaledRenderer.enabled && scaledRenderer.isVisible));
+                                flare.bodyMesh.SetActive(!(scaledRenderer.enabled && scaledRenderer.isVisible));
+                            }
+                            catch (Exception e)
+                            {
+                                flare.bodyMesh.SetActive(true);
+                                Debug.LogException(e);
+                            }
                         }
-                        catch (Exception e)
+                        else
                         {
-                            flare.bodyMesh.SetActive(true);
-                            Debug.LogException(e);
+                            flare.bodyMesh.SetActive(false);
                         }
                     }
 

@@ -16,7 +16,7 @@ namespace DistantObject
                 {
                     Version version = Assembly.GetExecutingAssembly().GetName().Version;
 
-                    _DistantObject = "Distant Object Enhancement v" + version.Major + "." + version.Minor;
+                    _DistantObject = "Distant Object Enhancement v" + version.Major + "." + version.Minor + "." + version.Build;
                 }
 
                 return _DistantObject;

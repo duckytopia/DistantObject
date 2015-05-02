@@ -6,6 +6,7 @@ This plugin renders effects for distant objects in Kerbal Space Program v1.0.2.
 Version 1.5.5 Release Notes:
 - Option to show config button only in Space Center view (Gribbleshnibit8View).
 - Labels for worlds that are not visible (such as blocked by a nearby world) no longer show up.
+- Some assorted tweaks in an effort to deal with a couple of other bugs.
 
 Original plugin by duckytopia (Rubber Ducky on the KSP forum).
 

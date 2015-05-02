@@ -222,15 +222,15 @@ namespace DistantObject
             // See if there are vessels that need to be removed from our live
             // list
             List<Vessel> deadVessels = new List<Vessel>();
-            foreach(Vessel v in vesselFlares.Keys)
+            foreach (Vessel v in vesselFlares.Keys)
             {
-                if(v.loaded == true || !situations.Contains(v.situation))
+                if (v.loaded == true || !situations.Contains(v.situation))
                 {
                     deadVessels.Add(v);
                 }
             }
 
-            foreach(Vessel v in deadVessels)
+            foreach (Vessel v in deadVessels)
             {
                 RemoveVesselFlare(v);
             }
@@ -406,20 +406,24 @@ namespace DistantObject
                     {
                         continue;
                     }
-                    Vector3d vectorToBody = bodyFlare.body.position - mouseRay.origin;
-                    double mouseBodyAngle = Vector3d.Angle(vectorToBody, mouseRay.direction);
-                    if (mouseBodyAngle < 1.0)
+
+                    if (bodyFlare.meshRenderer.material.color.a > 0.0f)
                     {
-                        if (bodyFlare.body.Radius > bestRadius)
+                        Vector3d vectorToBody = bodyFlare.body.position - mouseRay.origin;
+                        double mouseBodyAngle = Vector3d.Angle(vectorToBody, mouseRay.direction);
+                        if (mouseBodyAngle < 1.0)
                         {
-                            double distance = Vector3d.Distance(FlightCamera.fetch.mainCamera.transform.position, bodyFlare.body.position);
-                            double angularSize = (180 / Math.PI) * bodyFlare.body.Radius / distance;
-                            if (angularSize < 0.2)
+                            if (bodyFlare.body.Radius > bestRadius)
                             {
-                                bestRadius = bodyFlare.body.Radius;
-                                showNameTransform = bodyFlare.body.transform;
-                                showNameString = bodyFlare.body.bodyName;
-                                showNameColor = bodyFlare.color;
+                                double distance = Vector3d.Distance(FlightCamera.fetch.mainCamera.transform.position, bodyFlare.body.position);
+                                double angularSize = (180 / Math.PI) * bodyFlare.body.Radius / distance;
+                                if (angularSize < 0.2)
+                                {
+                                    bestRadius = bodyFlare.body.Radius;
+                                    showNameTransform = bodyFlare.body.transform;
+                                    showNameString = bodyFlare.body.bodyName;
+                                    showNameColor = bodyFlare.color;
+                                }
                             }
                         }
                     }
@@ -476,9 +480,9 @@ namespace DistantObject
 
             List<string> situationStrings = DistantObjectSettings.DistantFlare.situations.Split(',').ToList();
 
-            foreach(string sit in situationStrings)
+            foreach (string sit in situationStrings)
             {
-                if(namedSituations.ContainsKey(sit))
+                if (namedSituations.ContainsKey(sit))
                 {
                     situations.Add(namedSituations[sit]);
                 }
@@ -517,7 +521,7 @@ namespace DistantObject
         // longer supposed to be part of the draw list).
         private void RemoveVesselFlare(Vessel v)
         {
-            if(vesselFlares.ContainsKey(v))
+            if (vesselFlares.ContainsKey(v))
             {
                 GameObject flareMesh = vesselFlares[v].flareMesh;
                 DestroyObject(flareMesh);
@@ -551,7 +555,7 @@ namespace DistantObject
 
                         flare.bodyMesh.SetActive(!(scaledRenderer.enabled && scaledRenderer.isVisible));
                     }
-                    catch(Exception e)
+                    catch (Exception e)
                     {
                         flare.bodyMesh.SetActive(true);
                         Debug.LogException(e);
@@ -561,7 +565,7 @@ namespace DistantObject
                 UpdateVar();
 
                 GenerateVesselFlares();
-                foreach(VesselFlare vesselFlare in vesselFlares.Values)
+                foreach (VesselFlare vesselFlare in vesselFlares.Values)
                 {
                     vesselFlare.Update(camPos, camFOV);
 

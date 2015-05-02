@@ -545,49 +545,66 @@ namespace DistantObject
         {
             if (DistantObjectSettings.DistantFlare.flaresEnabled)
             {
-                camPos = FlightCamera.fetch.mainCamera.transform.position;
-
-                if (!ExternalControl)
+                showNameTransform = null;
+                if (MapView.MapIsEnabled)
                 {
-                    camFOV = FlightCamera.fetch.mainCamera.fieldOfView;
-                }
-
-                if (DistantObjectSettings.debugMode)
-                {
-                    Debug.Log(Constants.DistantObject + " -- Update");
-                }
-                foreach (BodyFlare flare in bodyFlares)
-                {
-                    flare.Update(camPos, camFOV);
-                    CheckDraw(flare.bodyMesh, flare.meshRenderer, flare.body.transform.position, flare.body.referenceBody, flare.bodySize, FlareType.Celestial);
-
-                    try
+                    // Big Hammer for map view - don't draw any flares
+                    foreach (BodyFlare flare in bodyFlares)
                     {
-                        Renderer scaledRenderer = scaledTransforms.Find(x => x.name == flare.body.name).renderer;
-
-                        flare.bodyMesh.SetActive(!(scaledRenderer.enabled && scaledRenderer.isVisible));
+                        flare.bodyMesh.SetActive(false);
                     }
-                    catch (Exception e)
+
+                    foreach (VesselFlare vesselFlare in vesselFlares.Values)
                     {
-                        flare.bodyMesh.SetActive(true);
-                        Debug.LogException(e);
+                        vesselFlare.flareMesh.SetActive(false);
                     }
                 }
-
-                UpdateVar();
-
-                GenerateVesselFlares();
-                foreach (VesselFlare vesselFlare in vesselFlares.Values)
+                else
                 {
-                    vesselFlare.Update(camPos, camFOV);
+                    camPos = FlightCamera.fetch.mainCamera.transform.position;
 
-                    if (vesselFlare.flareMesh.activeSelf)
+                    if (!ExternalControl)
                     {
-                        CheckDraw(vesselFlare.flareMesh, vesselFlare.meshRenderer, vesselFlare.flareMesh.transform.position, vesselFlare.referenceShip.mainBody, 5, (vesselFlare.referenceShip.vesselType == VesselType.Debris) ? FlareType.Debris : FlareType.Vessel);
+                        camFOV = FlightCamera.fetch.mainCamera.fieldOfView;
                     }
-                }
 
-                UpdateNameShown();
+                    if (DistantObjectSettings.debugMode)
+                    {
+                        Debug.Log(Constants.DistantObject + " -- Update");
+                    }
+                    foreach (BodyFlare flare in bodyFlares)
+                    {
+                        flare.Update(camPos, camFOV);
+                        CheckDraw(flare.bodyMesh, flare.meshRenderer, flare.body.transform.position, flare.body.referenceBody, flare.bodySize, FlareType.Celestial);
+
+                        try
+                        {
+                            Renderer scaledRenderer = scaledTransforms.Find(x => x.name == flare.body.name).renderer;
+
+                            flare.bodyMesh.SetActive(!(scaledRenderer.enabled && scaledRenderer.isVisible));
+                        }
+                        catch (Exception e)
+                        {
+                            flare.bodyMesh.SetActive(true);
+                            Debug.LogException(e);
+                        }
+                    }
+
+                    UpdateVar();
+
+                    GenerateVesselFlares();
+                    foreach (VesselFlare vesselFlare in vesselFlares.Values)
+                    {
+                        vesselFlare.Update(camPos, camFOV);
+
+                        if (vesselFlare.flareMesh.activeSelf)
+                        {
+                            CheckDraw(vesselFlare.flareMesh, vesselFlare.meshRenderer, vesselFlare.flareMesh.transform.position, vesselFlare.referenceShip.mainBody, 5, (vesselFlare.referenceShip.vesselType == VesselType.Debris) ? FlareType.Debris : FlareType.Vessel);
+                        }
+                    }
+
+                    UpdateNameShown();
+                }
             }
         }
 

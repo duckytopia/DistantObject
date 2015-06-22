@@ -6,43 +6,53 @@ using UnityEngine;
 
 namespace DistantObject
 {
+    // @ 1920x1080, 1 pixel with 60* FoV covers about 2 minutes of arc / 0.03 degrees
     class BodyFlare
     {
+        public static double kerbinSMA = -1.0;
+        public static double kerbinRadius;
+
         public CelestialBody body;
         public GameObject bodyMesh;
         public MeshRenderer meshRenderer;
         public Color color;
-        public Vector3d bodyAngle;
-        public double bodyDist;
-        public double bodySize;
+        public Vector3d cameraToBodyUnitVector;
+        public double distanceFromCamera;
+        public double sizeInDegrees;
+
+        public double relativeRadiusSquared;
+        public double bodyRadiusSquared;
 
         public void Update(Vector3d camPos, float camFOV)
         {
             // Update Body Flare
-            double targetSunDist = Vector3d.Distance(body.position, FlightGlobals.Bodies[0].position);
-            double camSunDist = Vector3d.Distance(camPos, FlightGlobals.Bodies[0].position);
             Vector3d targetVectorToSun = FlightGlobals.Bodies[0].position - body.position;
             Vector3d targetVectorToCam = camPos - body.position;
+
             double targetSunRelAngle = Vector3d.Angle(targetVectorToSun, targetVectorToCam);
 
-            double luminosity = (1.0 / Math.Pow(targetSunDist / FlightGlobals.Bodies[1].orbit.semiMajorAxis, 2.0)) * Math.Pow(body.Radius / FlightGlobals.Bodies[1].Radius, 2.0);
-            luminosity *= (0.5 + (32400.0 - Math.Pow(targetSunRelAngle, 2.0)) / 64800.0);
-            luminosity = (Math.Log10(luminosity) + 1.5) * (-2);
+            cameraToBodyUnitVector = -targetVectorToCam.normalized;
+            distanceFromCamera = targetVectorToCam.magnitude;
 
-            double brightness = luminosity + Math.Log10(bodyDist / FlightGlobals.Bodies[1].orbit.semiMajorAxis);
+            double kerbinSMAOverBodyDist = kerbinSMA / targetVectorToSun.magnitude;
+            double luminosity = kerbinSMAOverBodyDist * kerbinSMAOverBodyDist * relativeRadiusSquared;
+            luminosity *= (0.5 + (32400.0 - targetSunRelAngle * targetSunRelAngle) / 64800.0);
+            luminosity = (Math.Log10(luminosity) + 1.5) * (-2.0);
+
+            // We need to clamp this value to remain < 5, since larger values cause a negative resizeVector.
+            // This only appears to happen with some mod-generated worlds, but it's still a good practice
+            // and not terribly expensive.
+            float brightness = Math.Min(4.99f, (float)(luminosity + Math.Log10(distanceFromCamera / kerbinSMA)));
 
             //position, rotate, and scale mesh
             targetVectorToCam = (750000.0 * targetVectorToCam.normalized);
             bodyMesh.transform.position = camPos - targetVectorToCam;
             bodyMesh.transform.LookAt(camPos);
 
-            Vector3d resizeVector = Vector3d.one;
-            resizeVector *= (-750.0 * (brightness - 5.0) * (0.7 + .99 * camFOV) / 70.0) * DistantObjectSettings.DistantFlare.flareSize;
-            bodyMesh.transform.localScale = resizeVector;
+            float resizeFactor = (-750.0f * (brightness - 5.0f) * (0.7f + .99f * camFOV) / 70.0f) * DistantObjectSettings.DistantFlare.flareSize;
+            bodyMesh.transform.localScale = new Vector3(resizeFactor, resizeFactor, resizeFactor);
 
-            bodyDist = body.GetAltitude(camPos) + body.Radius;
-            bodySize = Math.Acos(Math.Sqrt(Math.Pow(bodyDist, 2.0) - Math.Pow(body.Radius, 2.0)) / bodyDist) * (180.0 / Math.PI);
-            bodyAngle = (body.position - camPos).normalized;
+            sizeInDegrees = Math.Acos(Math.Sqrt(distanceFromCamera * distanceFromCamera - bodyRadiusSquared) / distanceFromCamera) * Mathf.Rad2Deg;
         }
     }
 
@@ -115,6 +125,7 @@ namespace DistantObject
         {
             GameObject flare = GameDatabase.Instance.GetModel("DistantObject/Flare/model");
             GameObject flareMesh = Mesh.Instantiate(flare) as GameObject;
+            Destroy(flareMesh.collider);
             DestroyObject(flare);
 
             flareMesh.name = referenceShip.vesselName;
@@ -134,7 +145,8 @@ namespace DistantObject
             // layer 10, but that behaves poorly for nearby / co-orbital objects.
             // Move vessels back to layer 0 until I can find a better place to
             // put it.
-            //flareMR.gameObject.layer = 10;
+            // Renderer layers: http://wiki.kerbalspaceprogram.com/wiki/API:Layers
+            flareMR.gameObject.layer = 15;
             flareMR.material.shader = Shader.Find("KSP/Alpha/Unlit Transparent");
             flareMR.material.color = Color.white;
             flareMR.castShadows = false;
@@ -152,12 +164,35 @@ namespace DistantObject
             vesselFlares.Add(referenceShip, vesselFlare);
         }
 
+        private void ListChildren(PSystemBody body, int idx)
+        {
+            StringBuilder sb = new StringBuilder();
+            for(int i=0; i< idx; ++i) sb.Append("  ");
+            sb.Append("Body ");
+            sb.Append(body.celestialBody.name);
+            Debug.Log(sb.ToString());
+            for(int i=0; i<body.children.Count; ++i)
+            {
+                ListChildren(body.children[i], idx + 1);
+            }
+        }
         //--------------------------------------------------------------------
         // GenerateBodyFlares
         // Iterate over the celestial bodies and generate flares for each of
         // them.  Add the flare info to the dictionary.
         private void GenerateBodyFlares()
         {
+            //--- HACK++
+            //PSystemManager sm = PSystemManager.Instance;
+            //Debug.Log("PSystemManager scaledSpaceFactor = " + sm.scaledSpaceFactor);
+            //ListChildren(sm.systemPrefab.rootBody, 0);
+            //--- HACK--
+
+            if(BodyFlare.kerbinSMA <= 0.0)
+            {
+                BodyFlare.kerbinSMA = FlightGlobals.Bodies[1].orbit.semiMajorAxis;
+                BodyFlare.kerbinRadius = FlightGlobals.Bodies[1].Radius;
+            }
             bodyFlares.Clear();
 
             Dictionary<CelestialBody, Color> bodyColors = new Dictionary<CelestialBody, Color>();
@@ -167,9 +202,9 @@ namespace DistantObject
                 if (FlightGlobals.Bodies.Contains(body))
                 {
                     Color color = ConfigNode.ParseColor(node.config.GetValue("color"));
-                    color.r = 1 - (DistantObjectSettings.DistantFlare.flareSaturation * (1 - (color.r / 255)));
-                    color.g = 1 - (DistantObjectSettings.DistantFlare.flareSaturation * (1 - (color.g / 255)));
-                    color.b = 1 - (DistantObjectSettings.DistantFlare.flareSaturation * (1 - (color.b / 255)));
+                    color.r = 1.0f - (DistantObjectSettings.DistantFlare.flareSaturation * (1.0f - (color.r / 255.0f)));
+                    color.g = 1.0f - (DistantObjectSettings.DistantFlare.flareSaturation * (1.0f - (color.g / 255.0f)));
+                    color.b = 1.0f - (DistantObjectSettings.DistantFlare.flareSaturation * (1.0f - (color.b / 255.0f)));
                     color.a = 1;
                     if (!bodyColors.ContainsKey(body))
                     {
@@ -187,6 +222,7 @@ namespace DistantObject
                     BodyFlare bf = new BodyFlare();
 
                     GameObject flareMesh = Mesh.Instantiate(flare) as GameObject;
+                    Destroy(flareMesh.collider);
 
                     flareMesh.name = body.bodyName;
                     flareMesh.SetActive(true);
@@ -197,23 +233,26 @@ namespace DistantObject
                     // These flares were moved to 10 because of an
                     // interaction with PlanetShine.  However, I don't see
                     // that problem any longer (where flares changed brightness
-                    // during sunrise / sunset).
-                    flareMR.gameObject.layer = 0;
-                    //flareMR.gameObject.layer = 10;
+                    // during sunrise / sunset).  Valerian proposes instead using 15.
+                    flareMR.gameObject.layer = 15;
                     flareMR.material.shader = Shader.Find("KSP/Alpha/Unlit Transparent");
-                    Color color = Color.white;
                     if (bodyColors.ContainsKey(body))
                     {
-                        color = bodyColors[body];
+                        flareMR.material.color = bodyColors[body];
                     }
-                    flareMR.material.color = color;
+                    else
+                    {
+                        flareMR.material.color = Color.white;
+                    }
                     flareMR.castShadows = false;
                     flareMR.receiveShadows = false;
 
                     bf.body = body;
                     bf.bodyMesh = flareMesh;
                     bf.meshRenderer = flareMR;
-                    bf.color = color;
+                    bf.color = flareMR.material.color;
+                    bf.relativeRadiusSquared = Math.Pow(body.Radius / FlightGlobals.Bodies[1].Radius, 2.0);
+                    bf.bodyRadiusSquared = body.Radius * body.Radius;
 
                     bodyFlares.Add(bf);
                 }
@@ -237,15 +276,16 @@ namespace DistantObject
                 }
             }
 
-            foreach (Vessel v in deadVessels)
+            for (int v=0; v<deadVessels.Count; ++v)
             {
-                RemoveVesselFlare(v);
+                RemoveVesselFlare(deadVessels[v]);
             }
             deadVessels.Clear();
 
             // See which vessels we should add
-            foreach (Vessel vessel in FlightGlobals.Vessels)
+            for (int i = 0; i < FlightGlobals.Vessels.Count; ++i )
             {
+                Vessel vessel = FlightGlobals.Vessels[i];
                 if (!vesselFlares.ContainsKey(vessel) && RenderableVesselType(vessel.vesselType) && !vessel.loaded && situations.Contains(vessel.situation))
                 {
                     AddVesselFlare(vessel);
@@ -269,10 +309,10 @@ namespace DistantObject
             }
             else
             {
-                targetSize = Math.Atan2(objRadius, targetDist) * (180 / Math.PI);
+                targetSize = Math.Atan2(objRadius, targetDist) * Mathf.Rad2Deg;
             }
             double targetRefDist = Vector3d.Distance(position, referenceBody.position);
-            double targetRefSize = Math.Acos(Math.Sqrt(Math.Pow(targetRefDist, 2) - Math.Pow(referenceBody.Radius, 2)) / targetRefDist) * (180 / Math.PI);
+            double targetRefSize = Math.Acos(Math.Sqrt(Math.Pow(targetRefDist, 2.0) - Math.Pow(referenceBody.Radius, 2.0)) / targetRefDist) * Mathf.Rad2Deg;
 
             bool inShadow = false;
             if (referenceBody != FlightGlobals.Bodies[0] && targetRelAngle < targetRefSize)
@@ -291,7 +331,7 @@ namespace DistantObject
 
                 foreach (BodyFlare bodyFlare in bodyFlares)
                 {
-                    if (bodyFlare.body.bodyName != flareMesh.name && bodyFlare.bodyDist < targetDist && bodyFlare.bodySize > targetSize && Vector3d.Angle(bodyFlare.bodyAngle, position - camPos) < bodyFlare.bodySize)
+                    if (bodyFlare.body.bodyName != flareMesh.name && bodyFlare.distanceFromCamera < targetDist && bodyFlare.sizeInDegrees > targetSize && Vector3d.Angle(bodyFlare.cameraToBodyUnitVector, position - camPos) < bodyFlare.sizeInDegrees)
                     {
                         isVisible = false;
                     }
@@ -335,7 +375,7 @@ namespace DistantObject
         {
             Vector3d sunBodyAngle = (FlightGlobals.Bodies[0].position - camPos).normalized;
             double sunBodyDist = FlightGlobals.Bodies[0].GetAltitude(camPos) + FlightGlobals.Bodies[0].Radius;
-            double sunBodySize = Math.Acos(Math.Sqrt(Math.Pow(sunBodyDist, 2) - Math.Pow(FlightGlobals.Bodies[0].Radius, 2)) / sunBodyDist) * (180 / Math.PI);
+            double sunBodySize = Math.Acos(Math.Sqrt(Math.Pow(sunBodyDist, 2.0) - Math.Pow(FlightGlobals.Bodies[0].Radius, 2.0)) / sunBodyDist) * Mathf.Rad2Deg;
 
             atmosphereFactor = 1.0f;
 
@@ -371,7 +411,7 @@ namespace DistantObject
                 // atmDensityASL isn't an exact match for atmosphereMultiplier from KSP 0.90, I think, but it
                 // provides a '1' for Kerbin (1.2, actually)
                 float atmThickness = (float)Math.Min(Math.Sqrt(FlightGlobals.currentMainBody.atmDensityASL), 1);
-                atmosphereFactor = (atmThickness) * (atmosphereFactor) + (1 - atmThickness);
+                atmosphereFactor = (atmThickness) * (atmosphereFactor) + (1.0f - atmThickness);
             }
 
             dimFactor = Mathf.Min(1.0f, GalaxyCubeControl.Instance.maxGalaxyColor.r / DistantObjectSettings.SkyboxBrightness.maxBrightness);
@@ -382,17 +422,17 @@ namespace DistantObject
                 bool isVisible = true;
                 foreach (BodyFlare bodyFlare in bodyFlares)
                 {
-                    if (bodyFlare.bodyDist < sunBodyDist && bodyFlare.bodySize > sunBodySize && Vector3d.Angle(bodyFlare.bodyAngle, FlightGlobals.Bodies[0].position - camPos) < bodyFlare.bodySize)
+                    if (bodyFlare.distanceFromCamera < sunBodyDist && bodyFlare.sizeInDegrees > sunBodySize && Vector3d.Angle(bodyFlare.cameraToBodyUnitVector, FlightGlobals.Bodies[0].position - camPos) < bodyFlare.sizeInDegrees)
                     {
                         isVisible = false;
                     }
                 }
                 if (isVisible)
                 {
-                    dimFactor *= (float)Math.Pow(angCamToSun / (camFOV / 2), 4);
+                    dimFactor *= Mathf.Pow((float)angCamToSun / (camFOV / 2.0f), 4.0f);
                 }
             }
-            dimFactor = Math.Max(0.5f, dimFactor);
+            dimFactor = Mathf.Max(0.5f, dimFactor);
             dimFactor *= DistantObjectSettings.DistantFlare.flareBrightness;
         }
 
@@ -424,7 +464,7 @@ namespace DistantObject
                             if (bodyFlare.body.Radius > bestRadius)
                             {
                                 double distance = Vector3d.Distance(FlightCamera.fetch.mainCamera.transform.position, bodyFlare.body.position);
-                                double angularSize = (180 / Math.PI) * bodyFlare.body.Radius / distance;
+                                double angularSize = Mathf.Rad2Deg * bodyFlare.body.Radius / distance;
                                 if (angularSize < 0.2)
                                 {
                                     bestRadius = bodyFlare.body.Radius;
@@ -521,6 +561,12 @@ namespace DistantObject
                 ScaledSpace.Instance.scaledSpaceTransforms
                 .Where(ss => ss.GetComponent<ScaledSpaceFader>() != null)
                 .ToList();
+
+            //--- HACK++
+            //foreach(Transform sst in scaledTransforms)
+            //{
+            //    Debug.Log(string.Format("xform {0} @ {1}, which is {2}", sst.name, sst.position, ScaledSpace.ScaledToLocalSpace(sst.position)));
+            //}
         }
 
         //--------------------------------------------------------------------
@@ -575,13 +621,16 @@ namespace DistantObject
                     foreach (BodyFlare flare in bodyFlares)
                     {
                         flare.Update(camPos, camFOV);
-                        CheckDraw(flare.bodyMesh, flare.meshRenderer, flare.body.transform.position, flare.body.referenceBody, flare.bodySize, FlareType.Celestial);
+                        CheckDraw(flare.bodyMesh, flare.meshRenderer, flare.body.transform.position, flare.body.referenceBody, flare.sizeInDegrees, FlareType.Celestial);
 
                         if (flare.meshRenderer.material.color.a > 0.0f)
                         {
                             try
                             {
                                 Renderer scaledRenderer = scaledTransforms.Find(x => x.name == flare.body.name).renderer;
+
+                                //Transform t = scaledTransforms.Find(x => x.name == flare.body.name);
+                                //Debug.Log(string.Format("xform {0} @ {1}, which is {2}; world is {3}", t.name, t.position, ScaledSpace.ScaledToLocalSpace(t.position), flare.body.transform.position));
 
                                 flare.bodyMesh.SetActive(!(scaledRenderer.enabled && scaledRenderer.isVisible));
                             }

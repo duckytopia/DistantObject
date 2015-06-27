@@ -27,7 +27,7 @@ namespace DistantObject
     class DistantObjectSettings
     {
         //--- Config file values
-        public class DistantFlare
+        public struct DistantFlare
         {
             static public bool flaresEnabled = true;
             static public bool ignoreDebrisFlare = false;
@@ -39,7 +39,7 @@ namespace DistantObject
             static public float debrisBrightness = 0.15f;
         }
 
-        public class DistantVessel
+        public struct DistantVessel
         {
             static public bool renderVessels = false;
             static public float maxDistance = 750000.0f;
@@ -47,7 +47,7 @@ namespace DistantObject
             static public bool ignoreDebris = false;
         }
 
-        public class SkyboxBrightness
+        public struct SkyboxBrightness
         {
             static public bool changeSkybox = true;
             static public float maxBrightness = 0.25f;

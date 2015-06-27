@@ -3,11 +3,10 @@ Distant Object Enhancement bis
 
 This plugin renders effects for distant objects in Kerbal Space Program v1.0.2.
 
-Version 1.5.5 Release Notes:
-- Option to show config button only in Space Center view (Gribbleshnibit8View).
-- Labels for worlds that are not visible (such as blocked by a nearby world) no longer show up.
-- Some assorted tweaks in an effort to deal with a couple of other bugs.
-- Ghost flares should be fixed.
+Version 1.5.6 Release Notes:
+- Big flares appearing for small/dim worlds is fixed.  Issue #16.
+- A few changes to hopefully reduce memory footprint when some features are not used.
+- Sky dimming has been changed: Updates are shown immediately when "Apply" is pressed. Sky dimming now affects Tracking Station and Space Center views.  Planet dimming near the sun has been tweaked.
 
 Original plugin by duckytopia (Rubber Ducky on the KSP forum).
 

@@ -57,7 +57,7 @@ namespace DistantObject
                         continue;
                     }
 
-                    if(!partModelNameLookup.ContainsKey(partName))
+                    if (!partModelNameLookup.ContainsKey(partName))
                     {
                         partName = partName.Replace('.', '_');
                         if (!partModelNameLookup.ContainsKey(partName))
@@ -84,7 +84,7 @@ namespace DistantObject
                     cloneMesh.transform.SetParent(shipToDraw.transform);
                     cloneMesh.transform.localPosition = a.position;
                     cloneMesh.transform.localRotation = a.rotation;
-                    
+
                     VesselRanges.Situation situation = shipToDraw.vesselRanges.GetSituationRanges(shipToDraw.situation);
                     if (Vector3d.Distance(cloneMesh.transform.position, FlightGlobals.ship_position) < situation.load)
                     {
@@ -97,7 +97,7 @@ namespace DistantObject
                     {
                         col.enabled = false;
                     }
-                    
+
                     //check if part is a solar panel
                     ProtoPartModuleSnapshot solarPanel = a.modules.Find(n => n.moduleName == "ModuleDeployableSolarPanel");
                     if (solarPanel != null)
@@ -113,7 +113,7 @@ namespace DistantObject
                             //copy the animation over to the new part!
                             anim.AddClip(animClip, animName);
                             anim[animName].enabled = true;
-                            anim[animName].normalizedTime =1f;
+                            anim[animName].normalizedTime = 1f;
                         }
                     }
 
@@ -228,7 +228,7 @@ namespace DistantObject
         {
             if (DistantObjectSettings.DistantVessel.renderVessels)
             {
-                restart:
+            restart:
                 foreach (Vessel vessel in watchList)
                 {
                     if (!FlightGlobals.fetch.vessels.Contains(vessel))
@@ -299,40 +299,45 @@ namespace DistantObject
             watchList.Clear();
             partModelNameLookup.Clear();
 
-            foreach (UrlDir.UrlConfig urlConfig in GameDatabase.Instance.GetConfigs("PART"))
-            {
-                ConfigNode cfgNode = ConfigNode.Load(urlConfig.parent.fullPath);
-                foreach(ConfigNode node in cfgNode.nodes)
-                {
-                    if (node.GetValue("name") == urlConfig.name)
-                    {
-                        cfgNode = node;
-                    }
-                }
-
-                if (cfgNode.HasValue("name"))
-                {
-                    string url = urlConfig.parent.url.Substring(0, urlConfig.parent.url.LastIndexOf("/"));
-                    string model = System.IO.Path.GetFileNameWithoutExtension(cfgNode.GetValue("mesh"));
-                    if(!partModelNameLookup.ContainsKey(urlConfig.name))
-                    {
-                        partModelNameLookup.Add(urlConfig.name, url + "/" + model);
-                    }
-                }
-                else
-                {
-                    Debug.LogError(Constants.DistantObject + " -- Could not find ConfigNode for part " + urlConfig.name);
-                }
-            }
-
             if (DistantObjectSettings.DistantVessel.renderVessels)
             {
+                foreach (UrlDir.UrlConfig urlConfig in GameDatabase.Instance.GetConfigs("PART"))
+                {
+                    ConfigNode cfgNode = ConfigNode.Load(urlConfig.parent.fullPath);
+                    foreach (ConfigNode node in cfgNode.nodes)
+                    {
+                        if (node.GetValue("name") == urlConfig.name)
+                        {
+                            cfgNode = node;
+                        }
+                    }
+
+                    if (cfgNode.HasValue("name"))
+                    {
+                        string url = urlConfig.parent.url.Substring(0, urlConfig.parent.url.LastIndexOf("/"));
+                        string model = System.IO.Path.GetFileNameWithoutExtension(cfgNode.GetValue("mesh"));
+                        if (!partModelNameLookup.ContainsKey(urlConfig.name))
+                        {
+                            partModelNameLookup.Add(urlConfig.name, url + "/" + model);
+                        }
+                    }
+                    else
+                    {
+                        Debug.LogError(Constants.DistantObject + " -- Could not find ConfigNode for part " + urlConfig.name);
+                    }
+                }
+
                 print(Constants.DistantObject + " -- VesselDraw initialized");
             }
             else
             {
                 print(Constants.DistantObject + " -- VesselDraw disabled");
             }
+        }
+
+        private void OnDestroy()
+        {
+            print(Constants.DistantObject + " -- VesselDraw OnDestroy");
         }
     }
 }

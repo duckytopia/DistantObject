@@ -76,6 +76,11 @@ namespace DistantObject
             {
                 buttonDOSettings.Destroy();
             }
+
+            if (callback != null)
+            {
+                RenderingManager.RemoveFromPostDrawQueue(3, callback);
+            }
         }
     }
 }

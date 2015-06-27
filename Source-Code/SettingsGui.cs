@@ -27,6 +27,7 @@ namespace DistantObject
         private bool useToolbar = true;
         private bool useAppLauncher = true;
         private bool onlyInSpaceCenter = false;
+        private Callback callback = null;
 
         private static ApplicationLauncherButton appLauncherButton = null;
 
@@ -210,7 +211,8 @@ namespace DistantObject
                     toolbarButton();
                 }
 
-                RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));
+                callback = new Callback(drawGUI);
+                RenderingManager.AddToPostDrawQueue(3, callback);
             }
         }
 

@@ -340,9 +340,9 @@ namespace DistantObject
             {
                 isVisible = true;
 
-                foreach (BodyFlare bodyFlare in bodyFlares)
+                for (int i = 0; i < bodyFlares.Count; ++i)
                 {
-                    if (bodyFlare.body.bodyName != flareMesh.name && bodyFlare.distanceFromCamera < targetDist && bodyFlare.sizeInDegrees > targetSize && Vector3d.Angle(bodyFlare.cameraToBodyUnitVector, position - camPos) < bodyFlare.sizeInDegrees)
+                    if (bodyFlares[i].body.bodyName != flareMesh.name && bodyFlares[i].distanceFromCamera < targetDist && bodyFlares[i].sizeInDegrees > targetSize && Vector3d.Angle(bodyFlares[i].cameraToBodyUnitVector, position - camPos) < bodyFlares[i].sizeInDegrees)
                     {
                         isVisible = false;
                     }
@@ -425,25 +425,38 @@ namespace DistantObject
                 atmosphereFactor = (atmThickness) * (atmosphereFactor) + (1.0f - atmThickness);
             }
 
-            dimFactor = Mathf.Min(1.0f, GalaxyCubeControl.Instance.maxGalaxyColor.r / DistantObjectSettings.SkyboxBrightness.maxBrightness);
+            if(DistantObjectSettings.SkyboxBrightness.changeSkybox == true)
+            {
+                dimFactor = GalaxyCubeControl.Instance.maxGalaxyColor.r / DistantObjectSettings.SkyboxBrightness.maxBrightness;
+            }
+            else
+            {
+                dimFactor = 1.0f;
+            }
 
-            double angCamToSun = Vector3d.Angle(FlightCamera.fetch.mainCamera.transform.forward, sunBodyAngle);
-            if (angCamToSun < (camFOV / 2.0f))
+            // This code applies a fudge factor to flare dimming based on the
+            // angle between the camera and the sun.  We need to do this because
+            // KSP's sun dimming effect is not applied to maxGalaxyColor, so we
+            // really don't know how much dimming is being done.
+            float angCamToSun = Vector3.Angle(FlightCamera.fetch.mainCamera.transform.forward, sunBodyAngle);
+            if (angCamToSun < (camFOV * 0.5f))
             {
                 bool isVisible = true;
-                foreach (BodyFlare bodyFlare in bodyFlares)
+                for (int i = 0; i < bodyFlares.Count; ++i)
                 {
-                    if (bodyFlare.distanceFromCamera < sunBodyDist && bodyFlare.sizeInDegrees > sunBodySize && Vector3d.Angle(bodyFlare.cameraToBodyUnitVector, FlightGlobals.Bodies[0].position - camPos) < bodyFlare.sizeInDegrees)
+                    if (bodyFlares[i].distanceFromCamera < sunBodyDist && bodyFlares[i].sizeInDegrees > sunBodySize && Vector3d.Angle(bodyFlares[i].cameraToBodyUnitVector, FlightGlobals.Bodies[0].position - camPos) < bodyFlares[i].sizeInDegrees)
                     {
                         isVisible = false;
                     }
                 }
                 if (isVisible)
                 {
-                    dimFactor *= Mathf.Pow((float)angCamToSun / (camFOV / 2.0f), 4.0f);
+                    // Apply an arbitrary minimum value - the (x^4) function
+                    // isn't right, but it does okay on its own.
+                    float sunDimming = Mathf.Max(0.2f, Mathf.Pow(angCamToSun / (camFOV / 2.0f), 4.0f));
+                    dimFactor *= sunDimming;
                 }
             }
-            dimFactor = Mathf.Max(0.5f, dimFactor);
             dimFactor *= DistantObjectSettings.DistantFlare.flareBrightness;
         }
 

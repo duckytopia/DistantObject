@@ -54,6 +54,11 @@ namespace DistantObject
 
             sizeInDegrees = Math.Acos(Math.Sqrt(distanceFromCamera * distanceFromCamera - bodyRadiusSquared) / distanceFromCamera) * Mathf.Rad2Deg;
         }
+
+        ~BodyFlare()
+        {
+            Debug.Log(Constants.DistantObject + string.Format(" -- BodyFlare {0} Destroy", (body != null) ? body.name : "(null bodyflare?)"));
+        }
     }
 
     class VesselFlare
@@ -86,6 +91,12 @@ namespace DistantObject
 
                 flareMesh.transform.localScale = resizeVector;
             }
+        }
+
+        ~VesselFlare()
+        {
+            // Why is this never called?
+            Debug.Log(Constants.DistantObject + string.Format(" -- VesselFlare {0} Destroy", (referenceShip != null) ? referenceShip.vesselName : "(null vessel?)"));
         }
     }
 
@@ -567,6 +578,24 @@ namespace DistantObject
             //{
             //    Debug.Log(string.Format("xform {0} @ {1}, which is {2}", sst.name, sst.position, ScaledSpace.ScaledToLocalSpace(sst.position)));
             //}
+        }
+
+        private void OnDestroy()
+        {
+            GameEvents.onVesselWillDestroy.Remove(RemoveVesselFlare);
+
+            foreach (VesselFlare v in vesselFlares.Values)
+            {
+                Destroy(v.meshRenderer);
+                Destroy(v.flareMesh);
+            }
+            vesselFlares.Clear();
+            foreach (BodyFlare b in bodyFlares)
+            {
+                Destroy(b.meshRenderer);
+                Destroy(b.bodyMesh);
+            }
+            bodyFlares.Clear();
         }
 
         //--------------------------------------------------------------------

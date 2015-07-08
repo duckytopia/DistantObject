@@ -6,6 +6,7 @@ This plugin renders effects for distant objects in Kerbal Space Program v1.0.2 a
 Version 1.5.7 Release Notes:
 - NullReferenceException in FlareDraw.OnDestroy has been fixed.
 - Sky dimming has changed again.  Flares are dimmed less aggressively, particularly for very low max brightness settings.
+- The flare model's texture was resized and converted to .dds.  If you are installing over an existing DOE, please make sure to delete GameData/DistantObject/Flare/model000.png
 
 Original plugin by duckytopia (Rubber Ducky on the KSP forum).
 

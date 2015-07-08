@@ -1,3 +1,9 @@
+v1.5.7 (July 8, 2015)
+- NullReferenceException in FlareDraw.OnDestroy has been fixed.
+- Sky dimming has changed again.  Flares are dimmed less aggressively, particularly for very low max brightness settings.
+
+---
+
 v1.5.6 (June 27, 2015)
 - Big flares appearing for small/dim worlds is fixed.  Issue #16.
 - A few changes to hopefully reduce memory footprint when some features are not used.

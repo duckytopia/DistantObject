@@ -425,15 +425,17 @@ namespace DistantObject
                 atmosphereFactor = (atmThickness) * (atmosphereFactor) + (1.0f - atmThickness);
             }
 
+            float sunDimFactor = 1.0f;
+            float skyboxDimFactor;
             if(DistantObjectSettings.SkyboxBrightness.changeSkybox == true)
             {
                 // Apply fudge factors here so people who turn off the skybox don't turn off the flares, too.
                 // And avoid a divide-by-zero.
-                dimFactor = Mathf.Max(0.5f, GalaxyCubeControl.Instance.maxGalaxyColor.r / Mathf.Max(0.0078125f, DistantObjectSettings.SkyboxBrightness.maxBrightness));
+                skyboxDimFactor = Mathf.Max(0.5f, GalaxyCubeControl.Instance.maxGalaxyColor.r / Mathf.Max(0.0078125f, DistantObjectSettings.SkyboxBrightness.maxBrightness));
             }
             else
             {
-                dimFactor = 1.0f;
+                skyboxDimFactor = 1.0f;
             }
 
             // This code applies a fudge factor to flare dimming based on the
@@ -456,10 +458,10 @@ namespace DistantObject
                     // Apply an arbitrary minimum value - the (x^4) function
                     // isn't right, but it does okay on its own.
                     float sunDimming = Mathf.Max(0.2f, Mathf.Pow(angCamToSun / (camFOV / 2.0f), 4.0f));
-                    dimFactor *= sunDimming;
+                    sunDimFactor *= sunDimming;
                 }
             }
-            dimFactor *= DistantObjectSettings.DistantFlare.flareBrightness;
+            dimFactor = DistantObjectSettings.DistantFlare.flareBrightness * Mathf.Min(skyboxDimFactor, sunDimFactor);
         }
 
         //--------------------------------------------------------------------
@@ -596,6 +598,25 @@ namespace DistantObject
         }
 
         //--------------------------------------------------------------------
+        // DestroyVesselFlare
+        // Destroy the things associated with a VesselFlare
+        private static void DestroyVesselFlare(VesselFlare v)
+        {
+            if (v.meshRenderer != null)
+            {
+                if (v.meshRenderer.material != null)
+                {
+                    Destroy(v.meshRenderer.material);
+                }
+                Destroy(v.meshRenderer);
+            }
+            if (v.flareMesh != null)
+            {
+                Destroy(v.flareMesh);
+            }
+        }
+
+        //--------------------------------------------------------------------
         // OnDestroy()
         // Clean up after ourselves.
         private void OnDestroy()
@@ -603,18 +624,7 @@ namespace DistantObject
             GameEvents.onVesselWillDestroy.Remove(RemoveVesselFlare);
             foreach (VesselFlare v in vesselFlares.Values)
             {
-                if (v.meshRenderer != null)
-                {
-                    if (v.meshRenderer.material != null)
-                    {
-                        Destroy(v.meshRenderer.material);
-                    }
-                    Destroy(v.meshRenderer);
-                }
-                if (v.flareMesh != null)
-                {
-                    Destroy(v.flareMesh);
-                }
+                DestroyVesselFlare(v);
             }
             vesselFlares.Clear();
 
@@ -644,8 +654,7 @@ namespace DistantObject
         {
             if (vesselFlares.ContainsKey(v))
             {
-                GameObject flareMesh = vesselFlares[v].flareMesh;
-                DestroyObject(flareMesh);
+                DestroyVesselFlare(vesselFlares[v]);
 
                 vesselFlares.Remove(v);
             }

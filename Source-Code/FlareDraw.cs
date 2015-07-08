@@ -427,7 +427,9 @@ namespace DistantObject
 
             if(DistantObjectSettings.SkyboxBrightness.changeSkybox == true)
             {
-                dimFactor = GalaxyCubeControl.Instance.maxGalaxyColor.r / DistantObjectSettings.SkyboxBrightness.maxBrightness;
+                // Apply fudge factors here so people who turn off the skybox don't turn off the flares, too.
+                // And avoid a divide-by-zero.
+                dimFactor = Mathf.Max(0.5f, GalaxyCubeControl.Instance.maxGalaxyColor.r / Mathf.Max(0.0078125f, DistantObjectSettings.SkyboxBrightness.maxBrightness));
             }
             else
             {
@@ -593,20 +595,43 @@ namespace DistantObject
             //}
         }
 
+        //--------------------------------------------------------------------
+        // OnDestroy()
+        // Clean up after ourselves.
         private void OnDestroy()
         {
             GameEvents.onVesselWillDestroy.Remove(RemoveVesselFlare);
-
             foreach (VesselFlare v in vesselFlares.Values)
             {
-                Destroy(v.meshRenderer);
-                Destroy(v.flareMesh);
+                if (v.meshRenderer != null)
+                {
+                    if (v.meshRenderer.material != null)
+                    {
+                        Destroy(v.meshRenderer.material);
+                    }
+                    Destroy(v.meshRenderer);
+                }
+                if (v.flareMesh != null)
+                {
+                    Destroy(v.flareMesh);
+                }
             }
             vesselFlares.Clear();
+
             foreach (BodyFlare b in bodyFlares)
             {
-                Destroy(b.meshRenderer);
-                Destroy(b.bodyMesh);
+                if (b.meshRenderer != null)
+                {
+                    if (b.meshRenderer.material != null)
+                    {
+                        Destroy(b.meshRenderer.material);
+                    }
+                    Destroy(b.meshRenderer);
+                }
+                if (b.bodyMesh != null)
+                {
+                    Destroy(b.bodyMesh);
+                }
             }
             bodyFlares.Clear();
         }

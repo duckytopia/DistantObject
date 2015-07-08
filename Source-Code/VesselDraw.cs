@@ -337,7 +337,7 @@ namespace DistantObject
 
         private void OnDestroy()
         {
-            print(Constants.DistantObject + " -- VesselDraw OnDestroy");
+            //print(Constants.DistantObject + " -- VesselDraw OnDestroy");
         }
     }
 }

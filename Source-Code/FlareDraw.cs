@@ -57,7 +57,7 @@ namespace DistantObject
 
         ~BodyFlare()
         {
-            Debug.Log(Constants.DistantObject + string.Format(" -- BodyFlare {0} Destroy", (body != null) ? body.name : "(null bodyflare?)"));
+            //Debug.Log(Constants.DistantObject + string.Format(" -- BodyFlare {0} Destroy", (body != null) ? body.name : "(null bodyflare?)"));
         }
     }
 
@@ -96,7 +96,7 @@ namespace DistantObject
         ~VesselFlare()
         {
             // Why is this never called?
-            Debug.Log(Constants.DistantObject + string.Format(" -- VesselFlare {0} Destroy", (referenceShip != null) ? referenceShip.vesselName : "(null vessel?)"));
+            //Debug.Log(Constants.DistantObject + string.Format(" -- VesselFlare {0} Destroy", (referenceShip != null) ? referenceShip.vesselName : "(null vessel?)"));
         }
     }
 

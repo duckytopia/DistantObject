@@ -1,3 +1,10 @@
+v1.6.0 (July 23, 2015)
+- Finally fixed vessel flare positions.
+- Changed equation used to determine vessel flare brightness so smaller satellites will be visible.
+- Internal code changes to (maybe) reduce memory / CPU pressure.
+
+---
+
 v1.5.7 (July 8, 2015)
 - NullReferenceException in FlareDraw.OnDestroy has been fixed.
 - Sky dimming has changed again.  Flares are dimmed less aggressively, particularly for very low max brightness settings.

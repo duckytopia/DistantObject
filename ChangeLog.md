@@ -1,7 +1,7 @@
 v1.6.0 (July 23, 2015)
 - Finally fixed vessel flare positions.
 - Changed equation used to determine vessel flare brightness so smaller satellites will be visible.
-- Internal code changes to (maybe) reduce memory / CPU pressure.
+- Internal code changes to eliminate some redundant updates.
 
 ---
 

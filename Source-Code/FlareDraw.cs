@@ -66,30 +66,32 @@ namespace DistantObject
         public Vessel referenceShip;
         public GameObject flareMesh;
         public MeshRenderer meshRenderer;
-        public double luminosity;
-        public double brightness;
+        public float luminosity;
+        public float brightness;
 
         public void Update(Vector3d camPos, float camFOV)
         {
-            double targetDist = Vector3d.Distance(referenceShip.transform.position, camPos);
-            if (targetDist > 750000.0 && flareMesh.activeSelf)
+            Vector3d targetVectorToCam = camPos - referenceShip.transform.position;
+            float targetDist = (float)Vector3d.Distance(referenceShip.transform.position, camPos);
+            if (targetDist > 750000.0f && flareMesh.activeSelf)
             {
                 flareMesh.SetActive(false);
             }
-            if (targetDist < 750000.0 && !flareMesh.activeSelf)
+            if (targetDist < 750000.0f && !flareMesh.activeSelf)
             {
                 flareMesh.SetActive(true);
             }
 
             if (flareMesh.activeSelf)
             {
-                brightness = Math.Log10(luminosity) * (1.0 - Math.Pow(targetDist / 750000.0, 1.25));
+                brightness = Mathf.Log10(luminosity) * (1.0f - Mathf.Pow(targetDist / 750000.0f, 1.25f));
 
+                flareMesh.transform.position = camPos - targetDist * targetVectorToCam.normalized;
                 flareMesh.transform.LookAt(camPos);
-                Vector3d resizeVector = Vector3d.one;
-                resizeVector *= (0.002 * Vector3d.Distance(flareMesh.transform.position, camPos) * brightness * (0.7 + .99 * camFOV) / 70.0) * DistantObjectSettings.DistantFlare.flareSize;
+                float resizeFactor = (0.002f * targetDist * brightness * (0.7f + .99f * camFOV) / 70.0f) * DistantObjectSettings.DistantFlare.flareSize;
 
-                flareMesh.transform.localScale = resizeVector;
+                flareMesh.transform.localScale = new Vector3(resizeFactor, resizeFactor, resizeFactor);
+                //Debug.Log(string.Format("Resizing vessel flare {0} to {1} - brightness {2}, luminosity {3}", referenceShip.vesselName, resizeFactor, brightness, luminosity));
             }
         }
 
@@ -134,6 +136,7 @@ namespace DistantObject
         // Add a new vessel flare to our library
         private void AddVesselFlare(Vessel referenceShip)
         {
+            // DistantObject/Flare/model has extents of (0.5, 0.5, 0.0), a 1/2 meter wide square.
             GameObject flare = GameDatabase.Instance.GetModel("DistantObject/Flare/model");
             GameObject flareMesh = Mesh.Instantiate(flare) as GameObject;
             Destroy(flareMesh.collider);
@@ -141,15 +144,6 @@ namespace DistantObject
 
             flareMesh.name = referenceShip.vesselName;
             flareMesh.SetActive(true);
-
-            double luminosity = 0.0;
-            foreach (ProtoPartSnapshot part in referenceShip.protoVessel.protoPartSnapshots)
-            {
-                luminosity += Math.Pow(part.mass, 2.0);
-            }
-            // MOARdV: Luminosity can be < 1 for small / light craft, which leads to a
-            // negative localScale for a flare mesh.  Clamp to 1.0
-            luminosity = Math.Max(luminosity, 1.0);
 
             MeshRenderer flareMR = flareMesh.GetComponentInChildren<MeshRenderer>();
             // MOARdV: valerian recommended moving vessel and body flares to
@@ -163,30 +157,29 @@ namespace DistantObject
             flareMR.castShadows = false;
             flareMR.receiveShadows = false;
 
-            flareMesh.transform.SetParent(referenceShip.transform);
-
             VesselFlare vesselFlare = new VesselFlare();
             vesselFlare.flareMesh = flareMesh;
             vesselFlare.meshRenderer = flareMR;
             vesselFlare.referenceShip = referenceShip;
-            vesselFlare.luminosity = luminosity;
-            vesselFlare.brightness = 0.0;
+            vesselFlare.luminosity = 5.0f + Mathf.Pow(referenceShip.GetTotalMass(), 1.25f);
+            vesselFlare.brightness = 0.0f;
 
             vesselFlares.Add(referenceShip, vesselFlare);
         }
 
-        private void ListChildren(PSystemBody body, int idx)
-        {
-            StringBuilder sb = new StringBuilder();
-            for(int i=0; i< idx; ++i) sb.Append("  ");
-            sb.Append("Body ");
-            sb.Append(body.celestialBody.name);
-            Debug.Log(sb.ToString());
-            for(int i=0; i<body.children.Count; ++i)
-            {
-                ListChildren(body.children[i], idx + 1);
-            }
-        }
+        //private void ListChildren(PSystemBody body, int idx)
+        //{
+        //    StringBuilder sb = new StringBuilder();
+        //    for(int i=0; i< idx; ++i) sb.Append("  ");
+        //    sb.Append("Body ");
+        //    sb.Append(body.celestialBody.name);
+        //    Debug.Log(sb.ToString());
+        //    for(int i=0; i<body.children.Count; ++i)
+        //    {
+        //        ListChildren(body.children[i], idx + 1);
+        //    }
+        //}
+
         //--------------------------------------------------------------------
         // GenerateBodyFlares
         // Iterate over the celestial bodies and generate flares for each of
@@ -345,6 +338,7 @@ namespace DistantObject
                     if (bodyFlares[i].body.bodyName != flareMesh.name && bodyFlares[i].distanceFromCamera < targetDist && bodyFlares[i].sizeInDegrees > targetSize && Vector3d.Angle(bodyFlares[i].cameraToBodyUnitVector, position - camPos) < bodyFlares[i].sizeInDegrees)
                     {
                         isVisible = false;
+                        break;
                     }
                 }
             }
@@ -362,6 +356,7 @@ namespace DistantObject
                 {
                     color.a *= DistantObjectSettings.DistantFlare.debrisBrightness;
                 }
+                //color.a = 1.0f;
             }
             else
             {
@@ -508,21 +503,17 @@ namespace DistantObject
                 if (showNameTransform == null)
                 {
                     // Detect Vessel mouseovers
-                    double bestBrightness = 0.01; // min luminosity to show vessel name
+                    float bestBrightness = 0.01f; // min luminosity to show vessel name
                     foreach (VesselFlare vesselFlare in vesselFlares.Values)
                     {
-                        //MeshRenderer flareMR = vesselFlare.meshRenderer;
                         if (vesselFlare.flareMesh.activeSelf && vesselFlare.meshRenderer.material.color.a > 0.0f)
                         {
                             Vector3d vectorToVessel = vesselFlare.referenceShip.transform.position - mouseRay.origin;
                             double mouseVesselAngle = Vector3d.Angle(vectorToVessel, mouseRay.direction);
                             if (mouseVesselAngle < 1.0)
                             {
-                                //double distance = Vector3d.Distance(FlightCamera.fetch.mainCamera.transform.position, vesselFlare.referenceShip.transform.position);
-                                //double brightness = Math.Log10(vesselFlare.luminosity) * (1 - Math.Pow(distance / 750000, 1.25));
-                                double brightness = vesselFlare.brightness;
-                                // MOARdV TODO: Distance as a configurable parameter?
-                                if (brightness > bestBrightness /*&& distance < 750000.0*/)
+                                float brightness = vesselFlare.brightness;
+                                if (brightness > bestBrightness)
                                 {
                                     bestBrightness = brightness;
                                     showNameTransform = vesselFlare.referenceShip.transform;
@@ -661,6 +652,14 @@ namespace DistantObject
         }
 
         //--------------------------------------------------------------------
+        // FixedUpdate
+        // Update visible vessel list
+        public void FixedUpdate()
+        {
+            GenerateVesselFlares();
+        }
+
+        //--------------------------------------------------------------------
         // Update
         // Update flare positions and visibility
         private void Update()
@@ -724,7 +723,6 @@ namespace DistantObject
 
                     UpdateVar();
 
-                    GenerateVesselFlares();
                     foreach (VesselFlare vesselFlare in vesselFlares.Values)
                     {
                         vesselFlare.Update(camPos, camFOV);

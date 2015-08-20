@@ -1,18 +1,14 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace DistantObject
 {
-    [KSPAddon(KSPAddon.Startup.SpaceCentre, false)]
+    [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     partial class SettingsGui : MonoBehaviour
     {
         protected Rect windowPos = new Rect(Screen.width / 4, Screen.height / 4, 10f, 10f);
 
-        public static bool toolbarInstalled = false;
-        public static bool activated = false;
+        private static bool activated = false;
+        private bool isActivated = false;
 
         private bool flaresEnabled = false;
         private float flareSaturation = 0.65f;
@@ -20,6 +16,7 @@ namespace DistantObject
         private float flareBrightness = 1.0f;
         private bool ignoreDebrisFlare = false;
         private float debrisBrightness = 0.15f;
+        private bool showNames = false;
         private bool renderVessels = false;
         private float maxDistance = 750000f;
         private int renderMode = 1;
@@ -27,81 +24,229 @@ namespace DistantObject
         private bool changeSkybox = true;
         private float maxBrightness = 0.25f;
         private bool debugMode = false;
+        private bool useToolbar = true;
+        private bool useAppLauncher = true;
+        private bool onlyInSpaceCenter = false;
+        private Callback callback = null;
 
-        ConfigNode settings;
+        private static ApplicationLauncherButton appLauncherButton = null;
+
+        private void ApplySettings()
+        {
+            // Apply our local values to the settings file object, and then
+            // save it.
+            DistantObjectSettings.DistantFlare.flaresEnabled = flaresEnabled;
+            DistantObjectSettings.DistantFlare.flareSaturation = flareSaturation;
+            DistantObjectSettings.DistantFlare.flareSize = flareSize;
+            DistantObjectSettings.DistantFlare.flareBrightness = flareBrightness;
+            DistantObjectSettings.DistantFlare.ignoreDebrisFlare = ignoreDebrisFlare;
+            DistantObjectSettings.DistantFlare.debrisBrightness = debrisBrightness;
+            DistantObjectSettings.DistantFlare.showNames = showNames;
+
+            DistantObjectSettings.DistantVessel.renderVessels = renderVessels;
+            DistantObjectSettings.DistantVessel.maxDistance = maxDistance;
+            DistantObjectSettings.DistantVessel.renderMode = renderMode;
+            DistantObjectSettings.DistantVessel.ignoreDebris = ignoreDebris;
+
+            DistantObjectSettings.SkyboxBrightness.changeSkybox = changeSkybox;
+            DistantObjectSettings.SkyboxBrightness.maxBrightness = maxBrightness;
+
+            DistantObjectSettings.debugMode = debugMode;
+            DistantObjectSettings.useToolbar = useToolbar;
+            DistantObjectSettings.useAppLauncher = useAppLauncher;
+            DistantObjectSettings.onlyInSpaceCenter = onlyInSpaceCenter;
+
+            DistantObjectSettings.SaveConfig();
+        }
+
+        private void ReadSettings()
+        {
+            DistantObjectSettings.LoadConfig();
+
+            // Create local copies of the values, so we're not editing the
+            // config file until the user presses "Apply"
+            flaresEnabled = DistantObjectSettings.DistantFlare.flaresEnabled;
+            flareSaturation = DistantObjectSettings.DistantFlare.flareSaturation;
+            flareSize = DistantObjectSettings.DistantFlare.flareSize;
+            flareBrightness = DistantObjectSettings.DistantFlare.flareBrightness;
+            ignoreDebrisFlare = DistantObjectSettings.DistantFlare.ignoreDebrisFlare;
+            debrisBrightness = DistantObjectSettings.DistantFlare.debrisBrightness;
+            showNames = DistantObjectSettings.DistantFlare.showNames;
+
+            renderVessels = DistantObjectSettings.DistantVessel.renderVessels;
+            maxDistance = DistantObjectSettings.DistantVessel.maxDistance;
+            renderMode = DistantObjectSettings.DistantVessel.renderMode;
+            ignoreDebris = DistantObjectSettings.DistantVessel.ignoreDebris;
+
+            changeSkybox = DistantObjectSettings.SkyboxBrightness.changeSkybox;
+            maxBrightness = DistantObjectSettings.SkyboxBrightness.maxBrightness;
+
+            debugMode = DistantObjectSettings.debugMode;
+            useToolbar = DistantObjectSettings.useToolbar;
+            useAppLauncher = DistantObjectSettings.useAppLauncher || !ToolbarManager.ToolbarAvailable;
+            onlyInSpaceCenter = DistantObjectSettings.onlyInSpaceCenter;
+        }
+
+        void onAppLauncherTrue()
+        {
+            if (appLauncherButton == null)
+            {
+                Debug.LogError(Constants.DistantObject + " -- onAppLauncherTrue called without a button?!?");
+                return;
+            }
+
+            activated = true;
+
+            ToggleIcon();
+        }
+
+        void onAppLauncherFalse()
+        {
+            if (appLauncherButton == null)
+            {
+                Debug.LogError(Constants.DistantObject + " -- onAppLauncherFalse called without a button?!?");
+                return;
+            }
+
+            activated = false;
+            ToggleIcon();
+        }
+
+        void RemoveFromAppLauncher()
+        {
+            if (DistantObjectSettings.debugMode)
+            {
+                Debug.Log(Constants.DistantObject + " -- RemoveFromAppLauncher");
+            }
+            if (appLauncherButton != null)
+            {
+                ApplicationLauncher.Instance.RemoveApplication(appLauncherButton);
+                appLauncherButton = null;
+                GameEvents.onGameSceneLoadRequested.Remove(onGameSceneLoadRequestedForAppLauncher);
+            }
+        }
+
+        ApplicationLauncherButton InitAppLauncherButton()
+        {
+            ApplicationLauncherButton button = null;
+            Texture2D iconTexture = null;
+            if (DistantObjectSettings.debugMode)
+            {
+                Debug.Log(Constants.DistantObject + " -- InitAppLauncherButton");
+            }
+            if (GameDatabase.Instance.ExistsTexture("DistantObject/Icons/toolbar_disabled_38"))
+            {
+                iconTexture = GameDatabase.Instance.GetTexture("DistantObject/Icons/toolbar_disabled_38", false);
+            }
+
+            if (iconTexture == null)
+            {
+                Debug.LogError(Constants.DistantObject + " -- Failed to load toolbar_disabled_38");
+            }
+            else
+            {
+                button = ApplicationLauncher.Instance.AddModApplication(onAppLauncherTrue, onAppLauncherFalse,
+                    null, null, null, null,
+                    ApplicationLauncher.AppScenes.FLIGHT | ApplicationLauncher.AppScenes.SPACECENTER,
+                    iconTexture);
+
+                if (button == null)
+                {
+                    Debug.LogError(Constants.DistantObject + " -- Unable to create AppLauncher button");
+                }
+            }
+
+            return button;
+        }
+
+        void onGameSceneLoadRequestedForAppLauncher(GameScenes SceneToLoad)
+        {
+            if (DistantObjectSettings.debugMode)
+            {
+                Debug.Log(Constants.DistantObject + " -- onGameSceneLoadRequestedForAppLauncher: " + SceneToLoad.ToString() + " - " + this.GetInstanceID() + " AppLauncher.Ready = " + ApplicationLauncher.Ready.ToString());
+            }
+        }
 
         public void Awake()
         {
-            print("Distant Object Enhancement v1.3 -- SettingsGUI initialized");
-
-            foreach (AssemblyLoader.LoadedAssembly assembly in AssemblyLoader.loadedAssemblies)
-            {
-                if (assembly.name == "Toolbar")
-                    toolbarInstalled = true;
-            }
-
-            if (toolbarInstalled)
-                toolbarButton();
-
-            RenderingManager.AddToPostDrawQueue(3, new Callback(drawGUI));
-
             //Load settings
-            settings = ConfigNode.Load(KSPUtil.ApplicationRootPath + "GameData/DistantObject/Settings.cfg");
-            foreach (ConfigNode node in settings.GetNodes("DistantFlare"))
+            ReadSettings();
+
+            if (DistantObjectSettings.debugMode)
             {
-                flaresEnabled = bool.Parse(node.GetValue("flaresEnabled"));
-                flareSaturation = float.Parse(node.GetValue("flareSaturation"));
-                flareSize = float.Parse(node.GetValue("flareSize"));
-                flareBrightness = float.Parse(node.GetValue("flareBrightness"));
-                ignoreDebrisFlare = bool.Parse(node.GetValue("ignoreDebrisFlare"));
-                debrisBrightness = float.Parse(node.GetValue("debrisBrightness"));
-                debugMode = bool.Parse(node.GetValue("debugMode"));                
+                Debug.Log(Constants.DistantObject + " -- awake - " + this.GetInstanceID());
             }
 
-            foreach (ConfigNode node in settings.GetNodes("DistantVessel"))
+            // Load and configure once
+            if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
-                renderVessels = bool.Parse(node.GetValue("renderVessels"));
-                maxDistance = float.Parse(node.GetValue("maxDistance"));
-                renderMode = int.Parse(node.GetValue("renderMode"));
-                ignoreDebris = bool.Parse(node.GetValue("ignoreDebris"));
-            }
 
-            foreach (ConfigNode node in settings.GetNodes("SkyboxBrightness"))
-            {
-                changeSkybox = bool.Parse(node.GetValue("changeSkybox"));
-                maxBrightness = float.Parse(node.GetValue("maxBrightness"));
+                if (useAppLauncher && appLauncherButton == null && ApplicationLauncher.Ready)
+                {
+                    if (DistantObjectSettings.debugMode)
+                    {
+                        Debug.Log(Constants.DistantObject + " -- creating new appLauncher instance - " + this.GetInstanceID());
+                    }
+                    appLauncherButton = InitAppLauncherButton();
+                    GameEvents.onGameSceneLoadRequested.Add(onGameSceneLoadRequestedForAppLauncher);
+                }
+
+
+                if (useAppLauncher && appLauncherButton != null)
+                {
+                    if (onlyInSpaceCenter)
+                    {
+                        appLauncherButton.VisibleInScenes = ApplicationLauncher.AppScenes.SPACECENTER;
+                    }
+                    else
+                    {
+                        appLauncherButton.VisibleInScenes = ApplicationLauncher.AppScenes.SPACECENTER |
+                                                            ApplicationLauncher.AppScenes.FLIGHT;
+                    }
+                }
+
+
+                if (useToolbar && ToolbarManager.ToolbarAvailable)
+                {
+                    toolbarButton();
+                }
+
+                callback = new Callback(drawGUI);
+                RenderingManager.AddToPostDrawQueue(3, callback);
             }
         }
 
         private void mainGUI(int windowID)
         {
+            GUIStyle styleWindow = new GUIStyle(GUI.skin.window);
+            styleWindow.padding.left = 4;
+            styleWindow.padding.top = 4;
+            styleWindow.padding.bottom = 4;
+            styleWindow.padding.right = 4;
+
             GUILayout.BeginVertical();
 
             GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
-            GUILayout.Label("version 1.3");
+            GUILayout.Label("");
             GUILayout.EndHorizontal();
 
+            //--- Flare Rendering --------------------------------------------
+            GUILayout.BeginVertical("Flare Rendering", new GUIStyle(GUI.skin.window));
             GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
-            GUILayout.Label("_____________________________________");
-            GUILayout.EndHorizontal();
-
-            //--Flare Rendering
-            GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
-            if (GUILayout.Button(GetStatus(!flaresEnabled) + " Flares"))
-            {
-                flaresEnabled = !flaresEnabled;
-                settings.GetNode("DistantFlare").SetValue("flaresEnabled", "" + flaresEnabled);
-            }
+            flaresEnabled = GUILayout.Toggle(flaresEnabled, "Enable Flares");
             GUILayout.EndHorizontal();
 
             if (flaresEnabled)
             {
                 GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
+                showNames = GUILayout.Toggle(showNames, "Show names on mouseover");
+                GUILayout.EndHorizontal();
+
+                GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
                 GUILayout.Label("Flare Saturation");
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
                 flareSaturation = GUILayout.HorizontalSlider(flareSaturation, 0f, 1f, GUILayout.Width(240));
-                settings.GetNode("DistantFlare").SetValue("flareSaturation", "" + flareSaturation);
                 GUILayout.Label(string.Format("{0:0}", 100 * flareSaturation) + "%");
                 GUILayout.EndHorizontal();
 
@@ -110,7 +255,6 @@ namespace DistantObject
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
                 flareSize = GUILayout.HorizontalSlider(flareSize, 0.5f, 1.5f, GUILayout.Width(240));
-                settings.GetNode("DistantFlare").SetValue("flareSize", "" + flareSize);
                 GUILayout.Label(string.Format("{0:0}", 100 * flareSize) + "%");
                 GUILayout.EndHorizontal();
 
@@ -119,16 +263,11 @@ namespace DistantObject
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
                 flareBrightness = GUILayout.HorizontalSlider(flareBrightness, 0.0f, 1.0f, GUILayout.Width(240));
-                settings.GetNode("DistantFlare").SetValue("flareBrightness", "" + flareBrightness);
                 GUILayout.Label(string.Format("{0:0}", 100 * flareBrightness) + "%");
                 GUILayout.EndHorizontal();
 
                 GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
-                if (GUILayout.Button(GetStatus(!ignoreDebrisFlare) + " Debris Flares"))
-                {
-                    ignoreDebrisFlare = !ignoreDebrisFlare;
-                    settings.GetNode("DistantFlare").SetValue("ignoreDebrisFlare", "" + ignoreDebrisFlare);
-                }
+                ignoreDebrisFlare = !GUILayout.Toggle(!ignoreDebrisFlare, "Show Debris Flares");
                 GUILayout.EndHorizontal();
 
                 if (!ignoreDebrisFlare)
@@ -138,23 +277,21 @@ namespace DistantObject
                     GUILayout.EndHorizontal();
                     GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
                     debrisBrightness = GUILayout.HorizontalSlider(debrisBrightness, 0f, 1f, GUILayout.Width(240));
-                    settings.GetNode("DistantFlare").SetValue("debrisBrightness", "" + debrisBrightness);
                     GUILayout.Label(string.Format("{0:0}", 100 * debrisBrightness) + "%");
                     GUILayout.EndHorizontal();
                 }
             }
+            GUILayout.EndVertical();
 
             GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
-            GUILayout.Label("_____________________________________");
+            GUILayout.Label("");
             GUILayout.EndHorizontal();
-            
-            //--Vessel Rendering
+
+            //--- Vessel Rendering -------------------------------------------
+            GUILayout.BeginVertical("Distant Vessel", new GUIStyle(GUI.skin.window));
+
             GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
-            if (GUILayout.Button(GetStatus(!renderVessels) + " Distant Vessel Rendering"))
-            {
-                renderVessels = !renderVessels;
-                settings.GetNode("DistantVessel").SetValue("renderVessels", "" + renderVessels);
-            }
+            renderVessels = GUILayout.Toggle(renderVessels, "Distant Vessel Rendering");
             GUILayout.EndHorizontal();
 
             if (renderVessels)
@@ -164,7 +301,6 @@ namespace DistantObject
                 GUILayout.EndHorizontal();
                 GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
                 maxDistance = GUILayout.HorizontalSlider(maxDistance, 2500f, 750000f, GUILayout.Width(200));
-                settings.GetNode("DistantVessel").SetValue("maxDistance", "" + maxDistance);
                 GUILayout.Label(string.Format("{0:0}", maxDistance) + "m");
                 GUILayout.EndHorizontal();
 
@@ -172,60 +308,67 @@ namespace DistantObject
                 if (GUILayout.Button(renderMode == 0 ? "Render All Unloaded Vessels" : "Render Targeted Vessel Only"))
                 {
                     if (renderMode == 0)
+                    {
                         renderMode = 1;
+                    }
                     else
+                    {
                         renderMode = 0;
-                    settings.GetNode("DistantVessel").SetValue("renderMode", "" + renderMode);
+                    }
                 }
                 GUILayout.EndHorizontal();
 
                 if (renderMode == 1)
                 {
                     GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
-                    if (GUILayout.Button(GetStatus(ignoreDebris) + " Debris Rendering"))
-                    {
-                        ignoreDebris = !ignoreDebris;
-                        settings.GetNode("DistantVessel").SetValue("ignoreDebris", "" + ignoreDebris);
-                    }
+                    ignoreDebris = GUILayout.Toggle(ignoreDebris, "Ignore Debris");
                     GUILayout.EndHorizontal();
                 }
             }
+            GUILayout.EndVertical();
 
             GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
-            GUILayout.Label("_____________________________________");
+            GUILayout.Label("");
             GUILayout.EndHorizontal();
 
-            //--Skybox Brightness
+            //--- Skybox Brightness ------------------------------------------
+            GUILayout.BeginVertical("Skybox Dimming", new GUIStyle(GUI.skin.window));
             GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
-            if (GUILayout.Button(GetStatus(!changeSkybox) + " Dynamic Sky Dimming"))
-            {
-                changeSkybox = !changeSkybox;
-                settings.GetNode("SkyboxBrightness").SetValue("changeSkybox", "" + changeSkybox);
-            }
+
+            changeSkybox = GUILayout.Toggle(changeSkybox, "Dynamic Sky Dimming");
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
             GUILayout.Label("Maximum Sky Brightness");
             GUILayout.EndHorizontal();
+
             GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
             maxBrightness = GUILayout.HorizontalSlider(maxBrightness, 0f, 1f, GUILayout.Width(240));
-            settings.GetNode("SkyboxBrightness").SetValue("maxBrightness", "" + maxBrightness);
             GUILayout.Label(string.Format("{0:0}", 100 * maxBrightness) + "%");
             GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
 
             GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
-            GUILayout.Label("_____________________________________");
+            GUILayout.Label("");
             GUILayout.EndHorizontal();
 
-            //--Misc.
+            //--- Misc. ------------------------------------------------------
             GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
-            if (GUILayout.Button(GetStatus(!debugMode) + " Debug Mode"))
+            debugMode = GUILayout.Toggle(debugMode, "Debug Mode");
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
+            useAppLauncher = GUILayout.Toggle(useAppLauncher, "Use KSP AppLauncher (may require restart)");
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
+            onlyInSpaceCenter = GUILayout.Toggle(onlyInSpaceCenter, "Show AppLauncher only in Space Center");
+            GUILayout.EndHorizontal();
+            GUILayout.BeginHorizontal(GUILayout.ExpandWidth(false));
+            useToolbar = GUILayout.Toggle(useToolbar, "Use Blizzy's Toolbar (may require restart)");
+            GUILayout.EndHorizontal();
+            if (useAppLauncher == false && useToolbar == false)
             {
-                debugMode = !debugMode;
-                settings.GetNode("DistantFlare").SetValue("debugMode", "" + debugMode);
-                settings.GetNode("DistantVessel").SetValue("debugMode", "" + debugMode);
+                useAppLauncher = true;
             }
-            GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal(GUILayout.ExpandHeight(false));
             if (GUILayout.Button("Reset To Default"))
@@ -235,9 +378,11 @@ namespace DistantObject
             GUILayout.EndHorizontal();
 
             GUILayout.BeginHorizontal(GUILayout.ExpandHeight(false));
+            GUIStyle styleApply = new GUIStyle(GUI.skin.button);
+            styleApply.fontSize = styleApply.fontSize + 2;
             if (GUILayout.Button("Apply", GUILayout.Height(50)))
             {
-                settings.Save(KSPUtil.ApplicationRootPath + "GameData/DistantObject/Settings.cfg");
+                ApplySettings();
             }
             GUILayout.EndHorizontal();
 
@@ -247,9 +392,17 @@ namespace DistantObject
 
         private void drawGUI()
         {
-            if (activated)
+            if (HighLogic.LoadedScene == GameScenes.SPACECENTER || HighLogic.LoadedScene == GameScenes.FLIGHT)
             {
-                windowPos = GUILayout.Window(-5234628, windowPos, mainGUI, "Distant Object Enhancement Settings", GUILayout.Width(300), GUILayout.Height(200));
+                if (activated)
+                {
+                    if (!isActivated)
+                    {
+                        ReadSettings();
+                    }
+                    windowPos = GUILayout.Window(-5234628, windowPos, mainGUI, Constants.DistantObject + " Settings", GUILayout.Width(300), GUILayout.Height(200));
+                }
+                isActivated = activated;
             }
         }
 
@@ -258,44 +411,28 @@ namespace DistantObject
             flaresEnabled = true;
             flareSaturation = 0.65f;
             flareSize = 1.0f;
+            flareBrightness = 1.0f;
             ignoreDebrisFlare = false;
             debrisBrightness = 0.15f;
-            debugMode = false;
-            renderVessels = true;
+            showNames = false;
+
+            renderVessels = false;
             maxDistance = 750000f;
             renderMode = 1;
             ignoreDebris = false;
+
             changeSkybox = true;
             maxBrightness = 0.25f;
 
-            settings.GetNode("DistantFlare").SetValue("flaresEnabled", "" + flaresEnabled);
-            settings.GetNode("DistantFlare").SetValue("flareSaturation", "" + flareSaturation);
-            settings.GetNode("DistantFlare").SetValue("flareSize", "" + flareSize);
-            settings.GetNode("DistantFlare").SetValue("ignoreDebrisFlare", "" + ignoreDebrisFlare);
-            settings.GetNode("DistantFlare").SetValue("debrisBrightness", "" + debrisBrightness);
-            settings.GetNode("DistantFlare").SetValue("debugMode", "" + debugMode);
-            settings.GetNode("DistantVessel").SetValue("renderVessels", "" + renderVessels);
-            settings.GetNode("DistantVessel").SetValue("maxDistance", "" + maxDistance);
-            settings.GetNode("DistantVessel").SetValue("renderMode", "" + renderMode);
-            settings.GetNode("DistantVessel").SetValue("ignoreDebris", "" + ignoreDebris);
-            settings.GetNode("DistantVessel").SetValue("debugMode", "" + debugMode);
-            settings.GetNode("SkyboxBrightness").SetValue("changeSkybox", "" + changeSkybox);
-            settings.GetNode("SkyboxBrightness").SetValue("maxBrightness", "" + maxBrightness);
-
-            settings.Save(KSPUtil.ApplicationRootPath + "GameData/DistantObject/Settings.cfg");
+            debugMode = false;
+            useToolbar = true;
+            useAppLauncher = true;
+            onlyInSpaceCenter = true;
         }
 
         public static void Toggle()
         {
             activated = !activated;
-        }
-
-        private string GetStatus(bool value)
-        {
-            if (value)
-                return "Enable";
-            else
-                return "Disable";
         }
     }
 }

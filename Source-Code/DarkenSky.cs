@@ -1,101 +1,97 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
 
 namespace DistantObject
 {
+    //Peachoftree: It was EveryScene so the sky would darken in places like the starting menu and the tracking center, not just flight and map veiw 
     [KSPAddon(KSPAddon.Startup.EveryScene, false)]
     class DarkenSky : MonoBehaviour
     {
-        private bool changeSkybox = false;
-        private float maxBrightness = 1.0f;
-        private Color maxColor = Color.black;
+        private Color galaxyColor = Color.black;
+        private float glareFadeLimit = 0.0f;
+        private bool restorableGalaxyCube = false;
 
         public void Awake()
         {
-            //Load settings
-            ConfigNode settings = ConfigNode.Load(KSPUtil.ApplicationRootPath + "GameData/DistantObject/Settings.cfg");
-            foreach (ConfigNode node in settings.GetNodes("SkyboxBrightness"))
-            {
-                changeSkybox = bool.Parse(node.GetValue("changeSkybox"));
-                maxBrightness = float.Parse(node.GetValue("maxBrightness"));
-            }
+            restorableGalaxyCube = false;
 
-            maxColor.r = maxBrightness;
-            maxColor.b = maxBrightness;
-            maxColor.g = maxBrightness;
+            DistantObjectSettings.LoadConfig();
+
             if (GalaxyCubeControl.Instance != null)
             {
-                GalaxyCubeControl.Instance.maxGalaxyColor = maxColor;
+                restorableGalaxyCube = true;
+                galaxyColor = GalaxyCubeControl.Instance.maxGalaxyColor;
+                glareFadeLimit = GalaxyCubeControl.Instance.glareFadeLimit;
 
-                if (changeSkybox)
+                if (DistantObjectSettings.SkyboxBrightness.changeSkybox)
                 {
+                    GalaxyCubeControl.Instance.maxGalaxyColor = new Color(DistantObjectSettings.SkyboxBrightness.maxBrightness, DistantObjectSettings.SkyboxBrightness.maxBrightness, DistantObjectSettings.SkyboxBrightness.maxBrightness);
                     GalaxyCubeControl.Instance.glareFadeLimit = 1f;
                 }
             }
+        }
 
-            if (HighLogic.LoadedScene == GameScenes.SPACECENTER)
+        public void OnDestroy()
+        {
+            if (GalaxyCubeControl.Instance != null && restorableGalaxyCube)
             {
-                InvokeRepeating("SpaceCenterUpdate", 0.5f, 0.5f);
+                GalaxyCubeControl.Instance.maxGalaxyColor = galaxyColor;
+                GalaxyCubeControl.Instance.glareFadeLimit = glareFadeLimit;
+                restorableGalaxyCube = false;
             }
         }
 
         public void Update()
         {
-            if (changeSkybox && HighLogic.LoadedSceneIsFlight)
+            if (GalaxyCubeControl.Instance != null)
             {
-                Color color = maxColor;
-
-                if (!MapView.MapIsEnabled)
+                if (DistantObjectSettings.SkyboxBrightness.changeSkybox)
                 {
-                    Vector3d camPos = FlightCamera.fetch.mainCamera.transform.position;
-                    float camFov = FlightCamera.fetch.mainCamera.fieldOfView;
-                    Vector3d camAngle = FlightCamera.fetch.mainCamera.transform.forward;
+                    Color color = new Color(DistantObjectSettings.SkyboxBrightness.maxBrightness, DistantObjectSettings.SkyboxBrightness.maxBrightness, DistantObjectSettings.SkyboxBrightness.maxBrightness);
 
-                    foreach (CelestialBody body in FlightGlobals.Bodies)
+                    if (HighLogic.LoadedSceneIsFlight && !MapView.MapIsEnabled)
                     {
-                        double bodyDist = body.GetAltitude(camPos) + body.Radius;
-                        double bodySize = Math.Acos(Math.Sqrt(Math.Pow(bodyDist, 2) - Math.Pow(body.Radius, 2)) / bodyDist) * (180 / Math.PI);
+                        Vector3d camPos = FlightCamera.fetch.mainCamera.transform.position;
+                        float camFov = FlightCamera.fetch.mainCamera.fieldOfView;
+                        Vector3d camAngle = FlightCamera.fetch.mainCamera.transform.forward;
 
-                        if(bodySize > 1)
+                        for (int i = 0; i < FlightGlobals.Bodies.Count; ++i)
                         {
-                            Vector3d targetVectorToSun = FlightGlobals.Bodies[0].position - body.position;
-                            Vector3d targetVectorToCam = camPos - body.position;
-                            double targetRelAngle = Vector3d.Angle(targetVectorToSun, targetVectorToCam);
-                            targetRelAngle = Math.Max(targetRelAngle, bodySize);
-                            targetRelAngle = Math.Min(targetRelAngle, 100);
-                            targetRelAngle = 1 - ((targetRelAngle - bodySize) / (100 - bodySize));
-                            double CBAngle = Math.Max(0, Vector3d.Angle((body.position - camPos).normalized, camAngle) - bodySize);
-                            CBAngle = 1 - Math.Min(1, Math.Max(0, (CBAngle - (camFov / 2)) - 5) / (camFov / 4));
-                            bodySize = Math.Min(bodySize, 60);
+                            double bodyRadius = FlightGlobals.Bodies[i].Radius;
+                            double bodyDist = FlightGlobals.Bodies[i].GetAltitude(camPos) + bodyRadius;
+                            float bodySize = Mathf.Acos((float)(Math.Sqrt(bodyDist * bodyDist - bodyRadius * bodyRadius) / bodyDist)) * Mathf.Rad2Deg;
 
-                            color.r *= (float)(1 - ((targetRelAngle) * (Math.Sqrt(bodySize / 60)) * CBAngle));
-                            color.g *= (float)(1 - ((targetRelAngle) * (Math.Sqrt(bodySize / 60)) * CBAngle));
-                            color.b *= (float)(1 - ((targetRelAngle) * (Math.Sqrt(bodySize / 60)) * CBAngle));
+                            if (bodySize > 1.0f)
+                            {
+                                Vector3d bodyPosition = FlightGlobals.Bodies[i].position;
+                                Vector3d targetVectorToSun = FlightGlobals.Bodies[0].position - bodyPosition;
+                                Vector3d targetVectorToCam = camPos - bodyPosition;
+
+                                float targetRelAngle = (float)Vector3d.Angle(targetVectorToSun, targetVectorToCam);
+                                targetRelAngle = Mathf.Max(targetRelAngle, bodySize);
+                                targetRelAngle = Mathf.Min(targetRelAngle, 100.0f);
+                                targetRelAngle = 1.0f - ((targetRelAngle - bodySize) / (100.0f - bodySize));
+
+                                float CBAngle = Mathf.Max(0.0f, Vector3.Angle((bodyPosition - camPos).normalized, camAngle) - bodySize);
+                                CBAngle = 1.0f - Mathf.Min(1.0f, Math.Max(0.0f, (CBAngle - (camFov / 2.0f)) - 5.0f) / (camFov / 4.0f));
+                                bodySize = Mathf.Min(bodySize, 60.0f);
+
+                                float colorScalar = 1.0f - (targetRelAngle * (Mathf.Sqrt(bodySize / 60.0f)) * CBAngle);
+                                color.r *= colorScalar;
+                                color.g *= colorScalar;
+                                color.b *= colorScalar;
+                            }
                         }
                     }
+
+                    GalaxyCubeControl.Instance.maxGalaxyColor = color;
                 }
-
-                GalaxyCubeControl.Instance.maxGalaxyColor = color;
+                else if (restorableGalaxyCube)
+                {
+                    GalaxyCubeControl.Instance.maxGalaxyColor = galaxyColor;
+                    GalaxyCubeControl.Instance.glareFadeLimit = glareFadeLimit;
+                }
             }
-        }
-
-        private void SpaceCenterUpdate()
-        {
-            //Load settings
-            ConfigNode settings = ConfigNode.Load(KSPUtil.ApplicationRootPath + "GameData/DistantObject/Settings.cfg");
-            foreach (ConfigNode node in settings.GetNodes("SkyboxBrightness"))
-            {
-                changeSkybox = bool.Parse(node.GetValue("changeSkybox"));
-                maxBrightness = float.Parse(node.GetValue("maxBrightness"));
-            }
-
-            maxColor.r = maxBrightness;
-            maxColor.b = maxBrightness;
-            maxColor.g = maxBrightness;
-            GalaxyCubeControl.Instance.maxGalaxyColor = maxColor;
         }
     }
 }

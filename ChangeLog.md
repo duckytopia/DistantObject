@@ -1,3 +1,83 @@
+v1.6.0 (July 23, 2015)
+- Finally fixed vessel flare positions.
+- Changed equation used to determine vessel flare brightness so smaller satellites will be visible.
+- Internal code changes to eliminate some redundant updates.
+
+---
+
+v1.5.7 (July 8, 2015)
+- NullReferenceException in FlareDraw.OnDestroy has been fixed.
+- Sky dimming has changed again.  Flares are dimmed less aggressively, particularly for very low max brightness settings.
+- The flare model's texture was resized and converted to .dds.  If you are installing over an existing DOE, please make sure to delete GameData/DistantObject/Flare/model000.png
+
+---
+
+v1.5.6 (June 27, 2015)
+- Big flares appearing for small/dim worlds is fixed.  Issue #16.
+- A few changes to hopefully reduce memory footprint when some features are not used.
+- Sky dimming has been changed: Updates are shown immediately when "Apply" is pressed. Sky dimming now affects Tracking Station and Space Center views.  Planet dimming near the sun has been tweaked.
+
+---
+
+v1.5.5 (May 2, 2015)
+- Option to show config button only in Space Center view (Gribbleshnibit8View).
+- Labels for worlds that are not visible (such as blocked by a nearby world) no longer show up.
+- Some assorted tweaks in an effort to deal with a couple of other bugs.
+- Ghost flares should be fixed.
+
+---
+
+v1.5.4 (April 29, 2015)
+- Fix the App Launcher extra icon bug (Issue #12)
+
+---
+
+v1.5.3 (April 27, 2015)
+- KSP 1.0 compatibility release
+
+---
+
+v1.5.2 (February 15, 2015)
+- Fixed flares rendering when their world is rendered (eg, Minmus and its flare rendering at the same time).
+- Internal reorganization of the flare management code to make it less costly to execute, and easier to change.
+
+---
+
+v1.5.1 (December 21, 2014)
+- Removed requirement for blizzy's Toolbar being installed.
+
+---
+
+v1.5.0 (December 21, 2014)
+- Disable flare rendering in MapView, since flare positions are completely wrong.
+- Add support for stock KSP Toolbar (AppLauncher).
+
+---
+
+v1.4.2 (December 11, 2014)
+- Move vessel flares back to camera layer 0 to reduce their displacement as a temporary workaround for Issue #3 (MOARdV)
+- Fix flare drawing so it works with the CactEye telescope mod (Raven45)
+
+---
+
+v1.4.1
+- Fix skybox max brightness not being read (Issue #1)
+
+----
+
+v1.4 (November 2, 2014) Distant Object Enhancement bis
+
+- 0.25 compatibility
+- Fix potential NULL reference exceptions when vessels are destroyed fixed (Anatid)
+- Ability to show labels on flares (planets and visible vessels) (Anatid)
+- Moved flares to a different rendering layer so they're not affected by lighting illuminating the vessel, such as the PlanetShine mod (Valerian)
+- Tweaked GUI (MOARdV)
+- Enabled GUI in Flight in addition to Space Center view (some changes still going back to the Space Center before they take effect) (MOARdV)
+- Improved handling of missing config file or missing config file entries (MOARdV)
+
+
+----
+
 v1.3.1 (July 29, 2014)
 
 Patch by MOARdV

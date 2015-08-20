@@ -1,25 +1,24 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using UnityEngine;
-using Toolbar;
 
 namespace DistantObject
 {
     public partial class SettingsGui : MonoBehaviour
     {
-        public static IButton buttonDOSettings;
+        public static IButton buttonDOSettings = null;
 
         private void toolbarButton()
         {
-            print("Distant Object Enhancement v1.3 -- Drawing toolbar icon...");
+            print(Constants.DistantObject + " -- Drawing toolbar icon...");
             buttonDOSettings = ToolbarManager.Instance.add("test", "buttonDOSettings");
-            buttonDOSettings.Visibility = new GameScenesVisibility(GameScenes.SPACECENTER);
-            if(activated)
+            buttonDOSettings.Visibility = new GameScenesVisibility(GameScenes.SPACECENTER, GameScenes.FLIGHT);
+            if (activated)
+            {
                 buttonDOSettings.TexturePath = "DistantObject/Icons/toolbar_enabled";
+            }
             else
+            {
                 buttonDOSettings.TexturePath = "DistantObject/Icons/toolbar_disabled";
+            }
             buttonDOSettings.ToolTip = "Distant Object Enhancement Settings";
             buttonDOSettings.OnClick += (e) => Toggle();
             buttonDOSettings.OnClick += (e) => ToggleIcon();
@@ -27,15 +26,61 @@ namespace DistantObject
 
         private void ToggleIcon()
         {
-            if (buttonDOSettings.TexturePath == "DistantObject/Icons/toolbar_disabled")
-                buttonDOSettings.TexturePath = "DistantObject/Icons/toolbar_enabled";
-            else
-                buttonDOSettings.TexturePath = "DistantObject/Icons/toolbar_disabled";
+            if (buttonDOSettings != null)
+            {
+                if (activated)
+                {
+                    buttonDOSettings.TexturePath = "DistantObject/Icons/toolbar_enabled";
+                }
+                else
+                {
+                    buttonDOSettings.TexturePath = "DistantObject/Icons/toolbar_disabled";
+                }
+            }
+
+            if (appLauncherButton != null)
+            {
+                if (activated)
+                {
+                    Texture2D iconTexture = null;
+                    if (GameDatabase.Instance.ExistsTexture("DistantObject/Icons/toolbar_enabled_38"))
+                    {
+                        iconTexture = GameDatabase.Instance.GetTexture("DistantObject/Icons/toolbar_enabled_38", false);
+                    }
+                    if (iconTexture != null)
+                    {
+                        appLauncherButton.SetTexture(iconTexture);
+                    }
+                }
+                else
+                {
+                    Texture2D iconTexture = null;
+                    if (GameDatabase.Instance.ExistsTexture("DistantObject/Icons/toolbar_disabled_38"))
+                    {
+                        iconTexture = GameDatabase.Instance.GetTexture("DistantObject/Icons/toolbar_disabled_38", false);
+                    }
+                    if (iconTexture != null)
+                    {
+                        appLauncherButton.SetTexture(iconTexture);
+                    }
+                }
+
+            }
         }
 
         private void OnDestroy()
         {
-            buttonDOSettings.Destroy();
+            GameEvents.onGameSceneLoadRequested.Remove(onGameSceneLoadRequestedForAppLauncher);
+            
+            if (buttonDOSettings != null)
+            {
+                buttonDOSettings.Destroy();
+            }
+
+            if (callback != null)
+            {
+                RenderingManager.RemoveFromPostDrawQueue(3, callback);
+            }
         }
     }
 }
